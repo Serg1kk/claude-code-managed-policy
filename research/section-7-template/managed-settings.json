@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "Template managed-settings.json для fintech/banking компании 50-100 разработчиков. Не применять as-is — адаптировать под вашу org UUID, domains, repos. См. it-checklist.md для onboarding flow.",
+
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Read(./config/production.*)",
+      "Read(./config/prod/*)",
+      "Read(~/.aws/credentials)",
+      "Read(~/.aws/config)",
+      "Read(~/.ssh/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.kube/config)",
+      "Read(~/.terraformrc)",
+      "Read(~/.netrc)",
+      "Read(/etc/shadow)",
+      "Read(/etc/sudoers*)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(dd if=*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push *:main)",
+      "Bash(git push *:master)",
+      "Bash(git push *:release/*)",
+      "Bash(ssh *@*)",
+      "Bash(scp *@*)",
+      "Bash(sudo *)",
+      "WebFetch(domain:pastebin.com)",
+      "WebFetch(domain:*.ngrok.io)",
+      "WebFetch(domain:*.ngrok-free.app)",
+      "WebFetch(domain:transfer.sh)",
+      "WebFetch(domain:file.io)"
+    ],
+    "ask": [
+      "Write(**)",
+      "Edit(**)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(npm publish:*)",
+      "Bash(pip install *)",
+      "Bash(npm install *)",
+      "Bash(docker *)",
+      "Bash(kubectl *)",
+      "Bash(terraform apply*)",
+      "WebFetch"
+    ],
+    "allow": [
+      "Read(./src/**)",
+      "Read(./tests/**)",
+      "Read(./docs/**)",
+      "Read(./package.json)",
+      "Read(./tsconfig.json)",
+      "Read(./README.md)",
+      "Read(./CONTRIBUTING.md)",
+      "Read(./.github/**)",
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(yarn run *)",
+      "Bash(pytest *)",
+      "Bash(go test *)",
+      "Bash(cargo test *)",
+      "Bash(git status)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git branch *)",
+      "Bash(git checkout:*)",
+      "Bash(ls *)",
+      "Bash(pwd)",
+      "Bash(cat ./src/*)",
+      "Bash(cat ./tests/*)"
+    ],
+    "defaultMode": "default",
+    "disableBypassPermissionsMode": "disable"
+  },
+
+  "allowManagedPermissionRulesOnly": true,
+  "disableAutoMode": "disable",
+  "disableSkillShellExecution": true,
+
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "autoAllowBashIfSandboxed": true,
+    "allowUnsandboxedCommands": false,
+    "excludedCommands": [],
+    "filesystem": {
+      "denyRead": [
+        "~/.aws/**",
+        "~/.ssh/**",
+        "~/.gnupg/**",
+        "~/.docker/config.json",
+        "~/.kube/**",
+        "~/.netrc",
+        "/etc/shadow",
+        "/etc/sudoers",
+        "/etc/sudoers.d/**"
+      ],
+      "allowWrite": ["/tmp/claude-build"],
+      "denyWrite": ["/etc/**", "/usr/local/bin/**", "/opt/**"],
+      "allowManagedReadPathsOnly": false
+    },
+    "network": {
+      "allowedDomains": [
+        "*.acme-corp.com",
+        "github.com",
+        "api.github.com",
+        "*.github.io",
+        "*.npmjs.org",
+        "registry.npmjs.org",
+        "registry.yarnpkg.com",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "proxy.golang.org",
+        "sum.golang.org",
+        "*.anthropic.com",
+        "api.anthropic.com"
+      ],
+      "deniedDomains": [
+        "pastebin.com",
+        "*.ngrok.io",
+        "*.ngrok-free.app",
+        "transfer.sh",
+        "file.io"
+      ],
+      "allowManagedDomainsOnly": true,
+      "allowLocalBinding": true,
+      "allowAllUnixSockets": false
+    }
+  },
+
+  "availableModels": ["sonnet", "haiku"],
+  "model": "sonnet",
+
+  "allowedMcpServers": [
+    { "serverName": "github" },
+    { "serverName": "internal-jira" },
+    { "serverName": "company-vault" },
+    { "serverName": "confluence-internal" }
+  ],
+  "deniedMcpServers": [
+    { "serverName": "filesystem" },
+    { "serverName": "untrusted-*" }
+  ],
+  "allowManagedMcpServersOnly": true,
+  "enableAllProjectMcpServers": false,
+
+  "strictKnownMarketplaces": [
+    { "source": "github", "repo": "acme-corp/claude-plugins" }
+  ],
+  "blockedMarketplaces": [
+    { "source": "github", "repo": "*/untrusted-*" }
+  ],
+  "pluginTrustMessage": "All plugins from acme-corp/claude-plugins are approved by Security. See sec.acme.com/claude-plugins.",
+
+  "forceLoginMethod": "claudeai",
+  "forceLoginOrgUUID": ["REPLACE-WITH-ACME-ORG-UUID"],
+  "forceRemoteSettingsRefresh": false,
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/bin/acme-claude-session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|WebFetch|MCP",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/bin/acme-claude-audit-pre.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MCP",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/bin/acme-claude-audit-post.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/bin/acme-claude-session-end.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "allowManagedHooksOnly": true,
+  "allowedHttpHookUrls": [
+    "https://splunk.acme.com:8088/services/collector",
+    "https://datadog-internal.acme.com/api/v1/logs"
+  ],
+  "httpHookAllowedEnvVars": [
+    "SPLUNK_HEC_TOKEN",
+    "DD_API_KEY"
+  ],
+
+  "env": {
+    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",
+    "OTEL_METRICS_EXPORTER": "otlp",
+    "OTEL_EXPORTER_OTLP_ENDPOINT": "https://otel.acme.com:4318",
+    "ANTHROPIC_LOG": "info",
+    "NO_COLOR": "0",
+    "ACME_COMPLIANCE_ENV": "fintech-prod",
+    "ACME_AUDIT_ENDPOINT": "https://audit.acme.com/v1/claude-code/events"
+  },
+
+  "minimumVersion": "2.1.100",
+  "autoUpdatesChannel": "stable",
+  "cleanupPeriodDays": 2555,
+
+  "companyAnnouncements": [
+    "⚠️ Acme Corp managed Claude Code. SOC 2 Type II + PCI DSS environment. All activity logged.",
+    "Do NOT paste customer data, PII, or financial records in prompts. See sec.acme.com/ai-policy.",
+    "Managed policy version 2026-04-21. Questions: #claude-code-support Slack."
+  ],
+
+  "attribution": {
+    "commit": "🤖 Generated with Claude Code (Acme managed)",
+    "pr": ""
+  },
+  "includeCoAuthoredBy": true,
+  "includeGitInstructions": true,
+
+  "feedbackSurveyRate": 0,
+
+  "allowedChannelPlugins": [],
+  "channelsEnabled": false,
+
+  "disableDeepLinkRegistration": "disable"
+}

@@ -1,0 +1,19 @@
+# Private working files — never published
+miro-content.md
+tg-draft.md
+
+# macOS
+.DS_Store
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python (if anyone drops helper scripts)
+__pycache__/
+*.py[cod]
+venv/
+.venv/

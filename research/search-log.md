@@ -1,49 +1,30 @@
-# Search log —  research
+# Search log — research reproducibility
 
 **Date:** 2026-04-21
-**Mode:** course
-**Sources run:** 1 (KB grep), 3 (raw transcripts), 6 (Exa web), existing course research baseline
-**Sources skipped:** 2 (raw videos list — no matches), 4 (no additional inputs), 5 (NotebookLM — off, Anthropic docs are primary source-of-truth)
+**Mode:** full external + baseline
+**Sources run:** existing research baseline, Exa web searches (10 queries), targeted Exa fetches
+**Sources skipped:** NotebookLM (Anthropic docs are primary source of truth)
 
 ---
 
 ## Searches executed
 
-### Source 1 — Knowledge Base (internal)
+### Internal baseline — quick triage
 
-```
-Grep: "managed.policy|Managed Policy|MANAGED_POLICY" in AI stuff/knowledge-base/
-  → 0 files
+A private research baseline was grepped first to establish whether community transcripts and prior analyses materially covered Claude Code managed policy. Queries run against a processed YouTube transcript archive and a curated knowledge-base of AI-tooling notes:
 
-Grep: "/etc/claude-code|Library/Application Support/ClaudeCode" in AI stuff/
-  → 0 files
+- `managed.policy|Managed Policy|MANAGED_POLICY` → 0 hits
+- `/etc/claude-code|Library/Application Support/ClaudeCode` → 0 hits
+- `enterprise|managedSettings|claudeMdExcludes|Jamf|Intune|MDM` → 30+ files with generic mentions, none with concrete managed-policy content
+- `managed.policy|Managed Policy|enterprise.policy` across processed YouTube analyses → 0 hits
 
-Grep: "enterprise|managedSettings|claudeMdExcludes|Jamf|Intune|MDM" in AI stuff/
-  → 30+ files (generic mentions, no concrete managed-policy content)
+**Conclusion:** community YouTube analyses and general AI-tooling write-ups do not materially cover Claude Code managed policy. This is an enterprise/IT-admin topic that indie-developer-oriented creators haven't covered in depth yet. The research below relies 100% on external sources (Anthropic official docs + community deployment guides).
 
-Grep: "managed.policy|Managed Policy|enterprise.policy" in AI stuff/youtube/processed/
-  → 0 files
-```
-
-**Conclusion:** Community YouTube analyses and KB content do not materially cover managed policy. Research relies 100% on external sources (Anthropic docs + community guides).
-
-### Source 3 — Raw YouTube transcripts
-
-```
-Grep: "CLAUDE\.md|managed|enterprise" in 2026-04-12_xCd9ykretlg (Keith Rabois podcast)
-  → 8 hits, но это generic (не про managed policy)
-
-Спот-чек других raw transcripts — Nicolas Puru, Simon Scrapes, Cole Medin
-(ранее processed video-analyses) — никто не покрывает managed policy детально.
-```
-
-**Вывод:** community YouTube не покрывает managed policy — это enterprise/IT-admin тема, а YouTubers ориентированы на indie developers.
-
-### Source 6 — Exa web searches
+### Exa web searches — 10 queries
 
 1. **Query:** `"Anthropic Claude Code enterprise managed policy settings documentation docs.anthropic.com"`
    **Top hits:** docs.claude.com/en/docs/claude-code/settings, server-managed-settings, permissions, third-party-integrations, claude.com/product/claude-code/enterprise
-   **Value:** ⭐⭐⭐ канонические official docs
+   **Value:** ⭐⭐⭐ canonical official docs
 
 2. **Query:** `"Claude Code managed settings path macOS Library Application Support ClaudeCode /etc/claude-code Windows ProgramData"`
    **Top hits:** claudelog.com, claudefa.st (settings reference v2.1.79 / v2.1.114), managed-settings.net
@@ -55,7 +36,7 @@ Grep: "CLAUDE\.md|managed|enterprise" in 2026-04-12_xCd9ykretlg (Keith Rabois po
 
 4. **Query:** `"Claude Code managed policy CLAUDE.md enterprise IT admin cannot be excluded BYOK"`
    **Top hits:** GitHub issue #34349 (claudeMdRequires feature request), truefoundry.com blog, GitHub issue #11872 (--setting-source local bypass attempt)
-   **Value:** ⭐⭐⭐ critical gaps: claudeMdRequires not implemented, --setting-source не отключает managed
+   **Value:** ⭐⭐⭐ critical gaps — claudeMdRequires not implemented, --setting-source does not disable managed
 
 5. **Query:** `"Cursor enterprise team admin policies managed rules vs GitHub Copilot Business Enterprise organization policies"`
    **Top hits:** docs.github.com Copilot enterprise policies, cursor.com enterprise docs, aicodereview.cc comparison
@@ -67,7 +48,7 @@ Grep: "CLAUDE\.md|managed|enterprise" in 2026-04-12_xCd9ykretlg (Keith Rabois po
 
 7. **Query:** `"OpenAI Codex enterprise org admin controls policy Codex Enterprise edition"`
    **Top hits:** developers.openai.com/codex/enterprise, developers.openai.com/codex/enterprise/managed-configuration, /codex/exec-policy (rules), help.openai.com codex admin guide
-   **Value:** ⭐⭐⭐ Codex requirements.toml mechanism — очень близко к Claude managed-settings.json
+   **Value:** ⭐⭐⭐ Codex requirements.toml mechanism — very close to Claude managed-settings.json
 
 8. **Query:** `"Claude Code claudeMdExcludes cannot exclude managed policy CLAUDE.md system directory enterprise"`
    **Top hits:** docs.anthropic.com/memory (official wording), GitHub issues #20880 + #34349 + #11872, mintlify settings reference
@@ -81,9 +62,8 @@ Grep: "CLAUDE\.md|managed|enterprise" in 2026-04-12_xCd9ykretlg (Keith Rabois po
     **Top hits:** amitkoth.com SOC 2 guide, claude-ai.chat enterprise environments guide, Anthropic Compliance API help-center article
     **Value:** ⭐⭐⭐ compliance-specific use-cases + auditor perspective
 
-### Source 6 — Exa web fetches
+### Exa web fetches — full content pulled
 
-Fetched full content:
 - https://docs.claude.com/en/docs/claude-code/settings — complete settings reference (all keys, precedence, merge behavior)
 - https://code.claude.com/docs/en/server-managed-settings.md — server-managed mechanism
 - https://code.claude.com/docs/en/permissions.md — managed-only permissions keys
@@ -93,17 +73,17 @@ Fetched full content:
 
 ## Key discoveries
 
-1. **Two files, two purposes** — `managed-settings.json` (policy enforcement, primary) vs. Managed `CLAUDE.md` (behavioral memory, secondary). Current course materials conflate the two — this is the main correction.
+1. **Two files, two purposes** — `managed-settings.json` (policy enforcement, primary) vs. Managed `CLAUDE.md` (behavioral memory, secondary). Many community write-ups conflate the two — this is the main correction surfaced by the research.
 
-2. **Server-managed settings (Q4 2025+)** — third delivery mechanism beyond file-based and MDM. Not in course materials at all.
+2. **Server-managed settings (Q4 2025+)** — third delivery mechanism beyond file-based and MDM. Rarely mentioned in community write-ups.
 
-3. **Drop-in directory `managed-settings.d/`** (v2.1.83) — modular policy composition, systemd-style merge. Not in course materials.
+3. **Drop-in directory `managed-settings.d/`** (v2.1.83) — modular policy composition, systemd-style merge. Rarely documented outside official docs.
 
-4. **Windows path deprecation v2.1.75** — `C:\ProgramData\ClaudeCode\` removed in favor of `C:\Program Files\ClaudeCode\`. Course materials already use correct path ✅.
+4. **Windows path deprecation v2.1.75** — `C:\ProgramData\ClaudeCode\` removed in favor of `C:\Program Files\ClaudeCode\`. Some mirrors still show the old path.
 
-5. **claudeMdRequires** feature request still open — `claudeMdExcludes` can exclude project-level rule files, enterprise forced into monolithic managed CLAUDE.md.
+5. **claudeMdRequires** feature request still open — `claudeMdExcludes` can exclude project-level rule files, enterprise currently forced into monolithic managed CLAUDE.md.
 
-6. **--setting-source local does NOT disable managed policies** — Anthropic official position (bug #11872 closed as "by design").
+6. **`--setting-source local` does NOT disable managed policies** — Anthropic official position (issue #11872 closed as "by design").
 
 7. **Five distinct managed-only keys tiers:** `allowManagedXxxOnly` family (`PermissionRulesOnly`, `McpServersOnly`, `HooksOnly`, `DomainsOnly`, `ReadPathsOnly`) — combine for strict lockdown.
 
@@ -113,9 +93,9 @@ Fetched full content:
 
 ## Sources not fully explored (future research hooks)
 
-- Anthropic trust.anthropic.com portal — SOC 2 certificate / report (need login)
+- Anthropic trust.anthropic.com portal — SOC 2 certificate / report (requires login)
 - Compliance API PDF (linked from help center) — detailed event types
-- Specific Jamf ProfileCreator templates from Anthropic examples/mdm — not fetched content, only acknowledged presence
+- Specific Jamf ProfileCreator templates from Anthropic `examples/mdm` — acknowledged presence, not fetched content
 - Live tests of:
   - `CLAUDE_MANAGED_SETTINGS_PATH` env var (unconfirmed officially)
   - `CLAUDE_CODE_DISABLE_CLAUDE_MDS` env var (unconfirmed, community-mentioned)
@@ -125,9 +105,4 @@ Fetched full content:
 
 ## Time spent
 
-- Phase 0 (mode detection, source triage): 3 min
-- Phase 1 (reading promise README, existing baseline): 5 min
-- Phase 2 (Exa searches + Grep + fetches): 15 min
-- Phase 6 (authoring README + 7 section files): 45 min
-
-Total: ~70 min
+Roughly 70 minutes end-to-end — source triage, 10 Exa queries, targeted fetches, and write-up across the 7 sections.

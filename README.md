@@ -1,5 +1,7 @@
 # Claude Code Managed Policy — Enterprise Deployment Research
 
+> **Language:** English · [Русский](README.ru.md)
+
 Practical reference for anyone rolling out [Claude Code](https://claude.com/claude-code) at the organizational level: IT admins, InfoSec, DevOps, platform teams, tech leads in regulated industries.
 
 Focus: the enterprise controls the Anthropic CLI exposes, how to distribute them, what is (and isn't) hard-enforceable, and how it compares to other AI coding tools.

@@ -14,31 +14,31 @@
 
 ```
 research/
-├── README.md                      ← обзор + TL;DR + ключевые находки + все ссылки на источники
-├── search-log.md                  ← воспроизводимость: какие запросы и источники прогоняли
+├── README.ru.md                   ← обзор + TL;DR + ключевые находки + все ссылки на источники
+├── search-log.ru.md               ← воспроизводимость: какие запросы и источники прогоняли
 │
 ├── section-1-paths/
-│   └── paths-verified.md          ← пути managed-settings.json и CLAUDE.md на macOS / Linux / WSL / Windows
+│   └── paths-verified.ru.md       ← пути managed-settings.json и CLAUDE.md на macOS / Linux / WSL / Windows
 │
 ├── section-2-mdm-distribution/
-│   └── distribution.md            ← три механизма доставки + паттерны Jamf / Kandji / Intune / Group Policy / Ansible
+│   └── distribution.ru.md         ← три механизма доставки + паттерны Jamf / Kandji / Intune / Group Policy / Ansible
 │
 ├── section-3-enforceable/
-│   └── enforceable-keys.md        ← все managed-only ключи настроек (что контролируют, примеры значений)
+│   └── enforceable-keys.ru.md     ← все managed-only ключи настроек (что контролируют, примеры значений)
 │
 ├── section-4-bypass/
-│   └── bypass-attempts.md         ← что юзер может обойти, а что нет; известные щели; аудит
+│   └── bypass-attempts.ru.md      ← что юзер может обойти, а что нет; известные щели; аудит
 │
 ├── section-5-use-cases/
-│   └── real-world-use-cases.md    ← блокировка BYOK, coding standards под HIPAA/SOC 2, prod vs dev профили, audit trails
+│   └── real-world-use-cases.ru.md ← блокировка BYOK, coding standards под HIPAA/SOC 2, prod vs dev профили, audit trails
 │
 ├── section-6-comparison/
-│   └── competitors.md             ← Claude Code против Cursor / GitHub Copilot / OpenAI Codex / Windsurf
+│   └── competitors.ru.md          ← Claude Code против Cursor / GitHub Copilot / OpenAI Codex / Windsurf
 │
 └── section-7-template/
     ├── managed-settings.json      ← готовый к адаптации fintech-baseline (команда ~60 разработчиков)
-    ├── CLAUDE.md                  ← готовый к адаптации behavioral-policy (memory-слой)
-    └── it-checklist.md            ← playbook раскатывания для IT / платформенной команды
+    ├── CLAUDE.md                  ← готовый к адаптации behavioral-policy (memory-слой; EN-only)
+    └── it-checklist.ru.md         ← playbook раскатывания для IT / платформенной команды
 ```
 
 ---
@@ -109,11 +109,11 @@ research/
 
 ## Как пользоваться репозиторием
 
-- **Прицеливаетесь на enterprise-внедрение**: начните с `research/README.md`. Самодостаточный обзор: TL;DR-матрица, ключевые находки, gaps, все ссылки на источники.
-- **Пишете policy-файл прямо сейчас**: идите в `research/section-7-template/`. Адаптируйте `managed-settings.json` и `CLAUDE.md`. Пройдите по `it-checklist.md`.
-- **Выбираете между AI-инструментами**: начните с `research/section-6-comparison/competitors.md`.
-- **Юзеры пытаются обойти уже раскатанную policy**: `research/section-4-bypass/bypass-attempts.md` описывает, что работает, что нет и как аудитить.
-- **Воспроизводите или расширяете ресёрч**: `research/search-log.md` фиксирует, какие запросы и источники прогоняли.
+- **Прицеливаетесь на enterprise-внедрение**: начните с `research/README.ru.md`. Самодостаточный обзор: TL;DR-матрица, ключевые находки, gaps, все ссылки на источники.
+- **Пишете policy-файл прямо сейчас**: идите в `research/section-7-template/`. Адаптируйте `managed-settings.json` и `CLAUDE.md`. Пройдите по `it-checklist.ru.md`.
+- **Выбираете между AI-инструментами**: начните с `research/section-6-comparison/competitors.ru.md`.
+- **Юзеры пытаются обойти уже раскатанную policy**: `research/section-4-bypass/bypass-attempts.ru.md` описывает, что работает, что нет и как аудитить.
+- **Воспроизводите или расширяете ресёрч**: `research/search-log.ru.md` фиксирует, какие запросы и источники прогоняли.
 
 ---
 

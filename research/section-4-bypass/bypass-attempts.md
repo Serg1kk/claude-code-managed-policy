@@ -1,54 +1,56 @@
-# Section 4 — Override / bypass попытки
+# Section 4 — Override / bypass attempts
 
-**Источники:**
+> **Language:** English · [Русский](bypass-attempts.ru.md)
+
+**Sources:**
 - https://docs.anthropic.com/en/docs/claude-code/memory (managed CLAUDE.md cannot be excluded)
 - https://docs.claude.com/en/docs/claude-code/settings (precedence hierarchy)
-- https://github.com/anthropics/claude-code/issues/11872 (`--setting-source local` не отключает managed — by design)
-- https://github.com/anthropics/claude-code/issues/34349 (claudeMdRequires feature request — ещё не реализован)
+- https://github.com/anthropics/claude-code/issues/11872 (`--setting-source local` does not disable managed policies: by design)
+- https://github.com/anthropics/claude-code/issues/34349 (`claudeMdRequires` feature request: not yet implemented)
 - https://github.com/anthropics/claude-code/issues/20880 (parent CLAUDE.md exclusion)
 
 ---
 
 ## TL;DR
 
-- **Managed CLAUDE.md нельзя исключить** через `claudeMdExcludes` ✅ (подтверждено official docs)
-- **`--setting-source local` НЕ отключает** managed policies ✅ (подтверждено Anthropic в bug #11872: "Enterprise policies are not intended to be overridable")
-- **`--dangerously-skip-permissions` можно задизейблить** через managed `disableBypassPermissionsMode: "disable"`
-- **`forceRemoteSettingsRefresh: true`** делает CLI fail-closed при offline startup
-- **Но `claudeMdRequires` пока не реализован** (issue #34349) — user может через `claudeMdExcludes` в user-scope исключить **project-level** `.claude/rules/*.md` файлы. Единственный workaround — monolithic managed CLAUDE.md.
+- **Managed CLAUDE.md cannot be excluded** via `claudeMdExcludes` (confirmed by official docs)
+- **`--setting-source local` does NOT disable** managed policies (confirmed by Anthropic in bug #11872: "Enterprise policies are not intended to be overridable")
+- **`--dangerously-skip-permissions` can be disabled** via managed `disableBypassPermissionsMode: "disable"`
+- **`forceRemoteSettingsRefresh: true`** makes the CLI fail-closed on offline startup
+- **But `claudeMdRequires` is not yet implemented** (issue #34349): a user can, via `claudeMdExcludes` in user scope, exclude **project-level** `.claude/rules/*.md` files. The only workaround is a monolithic managed CLAUDE.md.
 
 ---
 
-## 1. `claudeMdExcludes` и managed CLAUDE.md
+## 1. `claudeMdExcludes` and managed CLAUDE.md
 
-### Фактическая механика (из official docs.anthropic.com/memory)
+### Actual mechanics (from official docs.anthropic.com/memory)
 
 > The `claudeMdExcludes` setting lets you skip specific files by path or glob pattern. [...]
 > You can configure `claudeMdExcludes` at any settings layer: user, project, local, or managed policy. Arrays merge across layers.
 > **Managed policy CLAUDE.md files cannot be excluded. This ensures** [that] organizational policy is always applied.
 
-Значит:
-- ✅ Managed CLAUDE.md (`/Library/Application Support/ClaudeCode/CLAUDE.md` и аналоги) — **immune к claudeMdExcludes**
-- ❌ Остальные CLAUDE.md уровней (user `~/.claude/CLAUDE.md`, project `./CLAUDE.md`, local `./CLAUDE.local.md`, subdirectory-level) — **можно исключить**
-- ❌ `.claude/rules/*.md` (modular rules, включая project-level "security-policy.md", "compliance-*.md") — **тоже можно исключить** через `claudeMdExcludes` у user-scope
+This means:
+- Managed CLAUDE.md (`/Library/Application Support/ClaudeCode/CLAUDE.md` and equivalents) is **immune to `claudeMdExcludes`**
+- Other CLAUDE.md tiers (user `~/.claude/CLAUDE.md`, project `./CLAUDE.md`, local `./CLAUDE.local.md`, subdirectory-level) **can be excluded**
+- `.claude/rules/*.md` files (modular rules, including project-level `security-policy.md`, `compliance-*.md`) **can also be excluded** via `claudeMdExcludes` at user scope
 
-### Практическая дыра (issue #34349)
+### Practical gap (issue #34349)
 
-**Сценарий:**
-1. Enterprise деплоит project-level `.claude/rules/security-policy.md` с mandatory security rules
-2. Developer добавляет в свой `~/.claude/settings.json`:
+**Scenario:**
+1. Enterprise deploys a project-level `.claude/rules/security-policy.md` with mandatory security rules
+2. A developer adds the following to their `~/.claude/settings.json`:
    ```json
    {"claudeMdExcludes": ["**/security-policy.md"]}
    ```
-3. **File исключается** — управляется же `claudeMdExcludes` merge across layers, и в user-scope это разрешено
-4. Managed-settings не имеет анти-exclusion mechanism
+3. **The file is excluded**: `claudeMdExcludes` merges across layers, and this is permitted at user scope
+4. Managed settings have no anti-exclusion mechanism
 
-**Текущий workaround (официальная позиция Anthropic):**
-- Поместить все mandatory instructions в **monolithic managed CLAUDE.md** — его нельзя исключить, но теряется модульность
-- Использовать `.claude/rules/*.md` только для **guidance**, не для mandatory enforcement
-- Mandatory enforcement делать через `permissions.deny` в managed-settings.json (hard rules), не через CLAUDE.md guidance
+**Current workaround (Anthropic's official position):**
+- Place all mandatory instructions in a **monolithic managed CLAUDE.md**: it cannot be excluded, but you lose modularity
+- Use `.claude/rules/*.md` only for **guidance**, not for mandatory enforcement
+- Enforce mandatory rules via `permissions.deny` in managed-settings.json (hard rules), not via CLAUDE.md guidance
 
-**Предложение в issue (не реализовано на 2026-04-21):**
+**Proposal in the issue (not implemented as of 2026-04-21):**
 ```json
 {
   "claudeMdRequires": [
@@ -58,17 +60,17 @@
   ]
 }
 ```
-→ файлы в `claudeMdRequires` (managed-settings.json only) нельзя exclude ни в одном scope.
+→ files listed in `claudeMdRequires` (managed-settings.json only) cannot be excluded at any scope.
 
 ---
 
-## 2. CLI flags bypass
+## 2. CLI flag bypasses
 
 ### `--dangerously-skip-permissions`
 ```bash
 claude --dangerously-skip-permissions "do something"
 ```
-**Default:** bypass всех permission checks.
+**Default:** bypasses all permission checks.
 
 **Enterprise block:**
 ```json
@@ -78,13 +80,13 @@ claude --dangerously-skip-permissions "do something"
   }
 }
 ```
-→ flag rejected at startup. Также блокируется `defaultMode: "bypassPermissions"` в user settings. ✅ **Hard enforce, managed может это задизейблить.**
+→ flag rejected at startup. `defaultMode: "bypassPermissions"` in user settings is also blocked. **Hard enforcement, managed can disable this.**
 
 ### `--permission-mode auto`
 ```bash
 claude --permission-mode auto "do something"
 ```
-Auto mode — LLM classifier решает что pre-approve.
+Auto mode: an LLM classifier decides what to pre-approve.
 
 **Enterprise block:**
 ```json
@@ -92,22 +94,22 @@ Auto mode — LLM classifier решает что pre-approve.
   "disableAutoMode": "disable"
 }
 ```
-→ Убирает `auto` из `Shift+Tab` cycle + flag rejected. ✅
+→ Removes `auto` from the `Shift+Tab` cycle and rejects the flag.
 
 ### `--setting-source local`
 ```bash
 claude --setting-source local "do something"
 ```
-**Intent (user):** игнорировать enterprise policies.
-**Реальность (bug #11872, response by Anthropic @ashwin-ant):**
+**User intent:** ignore enterprise policies.
+**Reality (bug #11872, response by Anthropic @ashwin-ant):**
 > This is expected behavior. Enterprise policies are not intended to be overridable.
 
-`/status` всё равно показывает:
+`/status` still shows:
 ```
 Setting sources: Local, Enterprise managed policies, Command line arguments
 ```
 
-→ **НЕ отключает managed**. User может отключить только user/project/local slots, но managed tier остаётся. ✅ **Hard enforce by design.**
+→ **Does NOT disable managed policies.** The user can only disable the user/project/local slots; the managed tier remains. **Hard enforcement by design.**
 
 ### `--model <name>`
 ```bash
@@ -120,33 +122,33 @@ claude --model claude-opus-4-6 "..."
   "availableModels": ["sonnet", "haiku"]
 }
 ```
-→ Если `--model opus` передан, но `opus` не в `availableModels` (managed), rejected. ✅
+→ If `--model opus` is passed but `opus` is not in `availableModels` (managed), it is rejected.
 
-**Obscure bypass:** `ANTHROPIC_MODEL` env var — тоже блокируется `availableModels`. ✅
+**Obscure bypass:** the `ANTHROPIC_MODEL` env var is also blocked by `availableModels`.
 
 ### `--settings <custom-path>`
 ```bash
 claude --settings ./custom-settings.json "..."
 ```
-Custom settings mergers как local project settings, но **НЕ** заменяет managed. Managed всё равно active. ✅
+Custom settings merge in as local project settings but do **NOT** replace managed settings. Managed remains active.
 
 ---
 
-## 3. Environment variables обход
+## 3. Environment variable bypasses
 
-### Попытки обхода через env
+### Bypass attempts via env
 ```bash
-export ANTHROPIC_MODEL=claude-opus-4-7        # блокируется availableModels
-export CLAUDE_CODE_SKIP_PROMPT_HISTORY=1       # разрешено (меняет только history)
-export CLAUDE_CODE_DISABLE_CLAUDE_MDS=1        # ⚠️ может disable ВСЕ CLAUDE.md, включая managed (!)
-export CLAUDE_MANAGED_SETTINGS_PATH=/tmp/lax.json  # ⚠️ неофициальный, может работать или нет
+export ANTHROPIC_MODEL=claude-opus-4-7        # blocked by availableModels
+export CLAUDE_CODE_SKIP_PROMPT_HISTORY=1       # allowed (only changes history)
+export CLAUDE_CODE_DISABLE_CLAUDE_MDS=1        # ⚠️ may disable ALL CLAUDE.md files, including managed (!)
+export CLAUDE_MANAGED_SETTINGS_PATH=/tmp/lax.json  # ⚠️ unofficial, may or may not work
 ```
 
-**Критично — `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`:**
-Упомянут в community references (`shanraisshan/claude-code-best-practice`). Если он реально работает — это **обходит managed CLAUDE.md** (но НЕ managed-settings.json enforcement). Нужна проверка в current CLI version.
+**Critical: `CLAUDE_CODE_DISABLE_CLAUDE_MDS=1`:**
+Mentioned in community references (`shanraisshan/claude-code-best-practice`). If it actually works, it **bypasses managed CLAUDE.md** (but NOT managed-settings.json enforcement). Needs verification against the current CLI version.
 
 **Mitigation:**
-Managed policy **не может** заблокировать env var на уровне клиента (env — это OS-уровень). Но **запрет env через managed**:
+Managed policy **cannot** block an env var at the client level (env is an OS-level construct). However, you can **deny env manipulation via managed policy**:
 ```json
 {
   "permissions": {
@@ -154,31 +156,31 @@ Managed policy **не может** заблокировать env var на ур�
   }
 }
 ```
-Слабый защита — если user запускает CLI через wrapper script с уже выставленным env, deny на Bash не поможет.
+This is weak protection: if the user launches the CLI via a wrapper script with the env already set, a Bash deny rule will not help.
 
-**Better mitigation — на уровне ОС:**
-- Managed shell profile (через MDM profile) + bash PROMPT_COMMAND проверка env
-- Anti-tamper EDR-решения (CrowdStrike, SentinelOne) monitor env changes
+**Better mitigation at the OS level:**
+- Managed shell profile (via MDM profile) plus a bash `PROMPT_COMMAND` env check
+- Anti-tamper EDR solutions (CrowdStrike, SentinelOne) monitor env changes
 
 ---
 
 ## 4. File-level bypass
 
-### User удаляет managed CLAUDE.md / managed-settings.json
-Требует **admin/root** — обычный developer не может.
+### User deletes managed CLAUDE.md / managed-settings.json
+Requires **admin/root**: an ordinary developer cannot do this.
 
-Если удаление сделано (escalated privileges или unmanaged machine):
-- CLI стартует без managed → user/project/local только
-- Audit event: MDM (Jamf/Intune) может детектить file drift через compliance check, auto-redeploy через minutes
+If deletion does happen (escalated privileges or unmanaged machine):
+- CLI starts without managed policy → only user/project/local tiers apply
+- Audit event: MDM (Jamf/Intune) can detect file drift via a compliance check and auto-redeploy within minutes
 
-### User делает `chmod 000` на managed файлы
-- Если user не может read managed policy file — CLI **fallback**: стартует без managed tier, warning в `/status`
-- Это graceful degradation, но **effectively user обошёл policy на этой машине**
+### User runs `chmod 000` on managed files
+- If the user cannot read the managed policy file, the CLI **falls back**: it starts without the managed tier and shows a warning in `/status`
+- This is graceful degradation, but **effectively the user has bypassed policy on that machine**
 
 **Mitigation:**
-- MDM compliance policies — если file permissions !== expected, auto-fix / auto-restore / alert
+- MDM compliance policies: if file permissions deviate from expected, auto-fix / auto-restore / alert
 - File integrity monitoring (Jamf: Compliance Reporter; Intune: Compliance Policy with custom detection)
-- Managed CLAUDE.md check через `/status` hook:
+- Managed CLAUDE.md check via a `/status` hook:
   ```json
   {
     "hooks": {
@@ -189,40 +191,40 @@ Managed policy **не может** заблокировать env var на ур�
   }
   ```
 
-### User монтирует read-only filesystem над `/etc/claude-code/`
-Экзотический bypass — mount tmpfs с пустыми файлами поверх managed policy. Требует root. EDR detects.
+### User mounts a read-only filesystem over `/etc/claude-code/`
+Exotic bypass: mount a tmpfs with empty files over the managed policy directory. Requires root. EDR detects it.
 
 ---
 
 ## 5. Unmanaged device (BYOD)
 
-**Главный gap:** если user запускает Claude Code на personal laptop, не enrolled в MDM, не залогинен в корп-аккаунт:
-- Нет managed-settings.json → работает без enforcement
-- Нет managed CLAUDE.md → без company context
-- User с personal Claude subscription — может делать что угодно
+**The main gap:** if a user runs Claude Code on a personal laptop that is not enrolled in MDM and not signed into a corporate account:
+- No managed-settings.json → runs without enforcement
+- No managed CLAUDE.md → no company context
+- A user with a personal Claude subscription can do whatever they want
 
 **Mitigation:**
-1. **`forceLoginMethod: "claudeai"` + `forceLoginOrgUUID`** (server-managed) — requires org login для CLI startup, personal аккаунт отвергается. Но это работает только если managed policy **есть** на машине.
-2. **Server-managed settings** — доставляются через api.anthropic.com при org login. Если user залогинен в org-аккаунт, они подтягиваются даже на personal машине. Но server-managed **требует** Claude for Teams/Enterprise plan.
-3. **Content filtering / audit через Compliance API** — Enterprise может видеть все activity через org-аккаунт, независимо от device.
-4. **Zero Trust approach** — запретить direct internet access с dev machines, force всё через корп-proxy → CLI calls goes через proxy → вижу всё.
-5. **Endpoint посторонится** — MDM enrollment как conditional access требование. Нет enrollment → нет корп login → нет managed settings.
+1. **`forceLoginMethod: "claudeai"` + `forceLoginOrgUUID`** (server-managed): requires an org login for CLI startup, personal accounts are rejected. But this only works if the managed policy **is present** on the machine.
+2. **Server-managed settings:** delivered via api.anthropic.com at org login. If the user is signed into an org account, they are pulled in even on a personal machine. But server-managed **requires** a Claude for Teams/Enterprise plan.
+3. **Content filtering / audit via the Compliance API:** Enterprise can see all activity through the org account, regardless of device.
+4. **Zero Trust approach:** block direct internet access from dev machines, force all traffic through a corporate proxy → the CLI's calls go through the proxy → you see everything.
+5. **Endpoint posture:** treat MDM enrollment as a conditional access requirement. No enrollment → no corporate login → no managed settings.
 
 ---
 
-## 6. Audit logging при попытке обойти
+## 6. Audit logging of bypass attempts
 
-### Что логируется официально
-- **Compliance API (Enterprise plan only):** `prompts, conversations, model used, tool calls`. Доступен Primary Owner. Не realtime alert per-event, но full export.
-- **Compliance API (audit events):** недавно добавлено — аутентификация, org admin changes, policy changes.
-- **hooks (self-configured):** если IT настроил `PreToolUse` / `PostToolUse` hooks, они логируют **каждую denied попытку** (hook runs before permission check, видит и allow, и deny).
+### What is logged officially
+- **Compliance API (Enterprise plan only):** `prompts, conversations, model used, tool calls`. Available to the Primary Owner. Not a realtime per-event alert feed, but a full export.
+- **Compliance API (audit events):** recently added: authentication, org admin changes, policy changes.
+- **Hooks (self-configured):** if IT sets up `PreToolUse` / `PostToolUse` hooks, they log **every denied attempt** (the hook runs before the permission check and sees both allows and denies).
 
-### Что НЕ логируется централизованно (gap)
-- Локальные попытки `--dangerously-skip-permissions` (если managed есть, это reject at startup — не event)
-- Попытки редактировать managed-settings.json (это OS-level event, не Claude-level — нужен OSQuery / EDR)
-- Offline sessions на unmanaged devices (если user не залогинен в org-аккаунт)
+### What is NOT logged centrally (gap)
+- Local attempts to pass `--dangerously-skip-permissions` (if managed policy is present, this is rejected at startup and is not an event)
+- Attempts to edit managed-settings.json (this is an OS-level event, not a Claude-level one: you need OSQuery / EDR)
+- Offline sessions on unmanaged devices (if the user is not signed into an org account)
 
-### Recommended audit stack для enterprise
+### Recommended audit stack for enterprise
 ```
 Claude Code CLI
     ↓ managed hooks
@@ -239,20 +241,20 @@ MDM compliance check every 4h → alert on drift
 
 ## 7. Read-access edge cases
 
-### Что если user не имеет read на /etc/claude-code/CLAUDE.md?
+### What if the user has no read access to /etc/claude-code/CLAUDE.md?
 
 **Current behavior (current CLI):**
-- CLI стартует без managed layer
-- `/status` показывает "Managed policies: not loaded (permission denied)" или аналогичное
-- User/project/local settings активны как обычно
-- **Effectively bypass** — user видит "warning", но CLI работает
+- CLI starts without the managed layer
+- `/status` shows "Managed policies: not loaded (permission denied)" or similar
+- User/project/local settings are active as usual
+- **Effectively a bypass:** the user sees a "warning" but the CLI still works
 
-Это **graceful degradation, не fail-closed.** Для strict enterprise — комбинировать с `forceRemoteSettingsRefresh: true` (хотя это про server-managed, не file-based).
+This is **graceful degradation, not fail-closed.** For strict enterprise, combine with `forceRemoteSettingsRefresh: true` (although that is about server-managed, not file-based, settings).
 
 **Mitigation:**
-- Правильные file permissions при deploy (`chmod 644` — world-readable)
-- MDM compliance check — если permissions drift, alert
-- Periodically verify через hook:
+- Correct file permissions at deploy time (`chmod 644`: world-readable)
+- MDM compliance check: if permissions drift, alert
+- Periodic verification via a hook:
   ```bash
   #!/bin/bash
   if [[ ! -r "/Library/Application Support/ClaudeCode/managed-settings.json" ]]; then
@@ -263,10 +265,10 @@ MDM compliance check every 4h → alert on drift
 
 ---
 
-## 8. Что можно спросить у Anthropic (для будущих обновлений)
+## 8. Questions to raise with Anthropic (for future updates)
 
-1. Будет ли реализован `claudeMdRequires`? (issue #34349 open c Mar 2026)
-2. Планируется ли per-group policy в server-managed settings?
-3. Можно ли добавить **fail-closed** mode для file-based managed (если файл есть, но не readable — fail CLI startup)?
-4. Добавить official managed event в Compliance API когда user пытается run denied command (сейчас только через custom hooks)
-5. Есть ли env var `CLAUDE_CODE_DISABLE_CLAUDE_MDS` — работает ли для managed?
+1. Will `claudeMdRequires` be implemented? (issue #34349 open since Mar 2026)
+2. Are per-group policies planned for server-managed settings?
+3. Can a **fail-closed** mode be added for file-based managed policies (if the file exists but is not readable, fail CLI startup)?
+4. Add an official managed event to the Compliance API when a user tries to run a denied command (currently only available via custom hooks).
+5. Does the env var `CLAUDE_CODE_DISABLE_CLAUDE_MDS` exist, and does it work for managed policies?

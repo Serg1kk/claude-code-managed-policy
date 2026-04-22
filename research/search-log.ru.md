@@ -1,6 +1,6 @@
 # Search log — research reproducibility
 
-> **Language:** English · [Русский](search-log.ru.md)
+> **Язык:** [English](search-log.md) · Русский
 
 **Date:** 2026-04-21
 **Mode:** full external + baseline
@@ -38,7 +38,7 @@ A private research baseline was grepped first to establish whether community tra
 
 4. **Query:** `"Claude Code managed policy CLAUDE.md enterprise IT admin cannot be excluded BYOK"`
    **Top hits:** GitHub issue #34349 (claudeMdRequires feature request), truefoundry.com blog, GitHub issue #11872 (--setting-source local bypass attempt)
-   **Value:** ⭐⭐⭐ critical gaps: claudeMdRequires not implemented, --setting-source does not disable managed
+   **Value:** ⭐⭐⭐ critical gaps — claudeMdRequires not implemented, --setting-source does not disable managed
 
 5. **Query:** `"Cursor enterprise team admin policies managed rules vs GitHub Copilot Business Enterprise organization policies"`
    **Top hits:** docs.github.com Copilot enterprise policies, cursor.com enterprise docs, aicodereview.cc comparison
@@ -50,7 +50,7 @@ A private research baseline was grepped first to establish whether community tra
 
 7. **Query:** `"OpenAI Codex enterprise org admin controls policy Codex Enterprise edition"`
    **Top hits:** developers.openai.com/codex/enterprise, developers.openai.com/codex/enterprise/managed-configuration, /codex/exec-policy (rules), help.openai.com codex admin guide
-   **Value:** ⭐⭐⭐ Codex requirements.toml mechanism, very close to Claude managed-settings.json
+   **Value:** ⭐⭐⭐ Codex requirements.toml mechanism — very close to Claude managed-settings.json
 
 8. **Query:** `"Claude Code claudeMdExcludes cannot exclude managed policy CLAUDE.md system directory enterprise"`
    **Top hits:** docs.anthropic.com/memory (official wording), GitHub issues #20880 + #34349 + #11872, mintlify settings reference
@@ -75,29 +75,29 @@ A private research baseline was grepped first to establish whether community tra
 
 ## Key discoveries
 
-1. **Two files, two purposes:** `managed-settings.json` (policy enforcement, primary) vs. Managed `CLAUDE.md` (behavioral memory, secondary). Many community write-ups conflate the two. This is the main correction surfaced by the research.
+1. **Two files, two purposes** — `managed-settings.json` (policy enforcement, primary) vs. Managed `CLAUDE.md` (behavioral memory, secondary). Many community write-ups conflate the two — this is the main correction surfaced by the research.
 
-2. **Server-managed settings (Q4 2025+):** third delivery mechanism beyond file-based and MDM. Rarely mentioned in community write-ups.
+2. **Server-managed settings (Q4 2025+)** — third delivery mechanism beyond file-based and MDM. Rarely mentioned in community write-ups.
 
-3. **Drop-in directory `managed-settings.d/`** (v2.1.83): modular policy composition, systemd-style merge. Rarely documented outside official docs.
+3. **Drop-in directory `managed-settings.d/`** (v2.1.83) — modular policy composition, systemd-style merge. Rarely documented outside official docs.
 
-4. **Windows path deprecation v2.1.75:** `C:\ProgramData\ClaudeCode\` removed in favor of `C:\Program Files\ClaudeCode\`. Some mirrors still show the old path.
+4. **Windows path deprecation v2.1.75** — `C:\ProgramData\ClaudeCode\` removed in favor of `C:\Program Files\ClaudeCode\`. Some mirrors still show the old path.
 
-5. **claudeMdRequires** feature request still open: `claudeMdExcludes` can exclude project-level rule files, enterprise currently forced into monolithic managed CLAUDE.md.
+5. **claudeMdRequires** feature request still open — `claudeMdExcludes` can exclude project-level rule files, enterprise currently forced into monolithic managed CLAUDE.md.
 
-6. **`--setting-source local` does NOT disable managed policies:** Anthropic official position (issue #11872 closed as "by design").
+6. **`--setting-source local` does NOT disable managed policies** — Anthropic official position (issue #11872 closed as "by design").
 
-7. **Five distinct managed-only keys tiers:** `allowManagedXxxOnly` family (`PermissionRulesOnly`, `McpServersOnly`, `HooksOnly`, `DomainsOnly`, `ReadPathsOnly`) combine for strict lockdown.
+7. **Five distinct managed-only keys tiers:** `allowManagedXxxOnly` family (`PermissionRulesOnly`, `McpServersOnly`, `HooksOnly`, `DomainsOnly`, `ReadPathsOnly`) — combine for strict lockdown.
 
-8. **MDM templates** officially published for 4 platforms: Jamf, Kandji (Iru), Intune, Group Policy, at github.com/anthropics/claude-code/tree/main/examples/mdm.
+8. **MDM templates** officially published for 4 platforms: Jamf, Kandji (Iru), Intune, Group Policy — at github.com/anthropics/claude-code/tree/main/examples/mdm.
 
 ---
 
 ## Sources not fully explored (future research hooks)
 
-- Anthropic trust.anthropic.com portal: SOC 2 certificate / report (requires login)
-- Compliance API PDF (linked from help center): detailed event types
-- Specific Jamf ProfileCreator templates from Anthropic `examples/mdm`: acknowledged presence, content not fetched
+- Anthropic trust.anthropic.com portal — SOC 2 certificate / report (requires login)
+- Compliance API PDF (linked from help center) — detailed event types
+- Specific Jamf ProfileCreator templates from Anthropic `examples/mdm` — acknowledged presence, not fetched content
 - Live tests of:
   - `CLAUDE_MANAGED_SETTINGS_PATH` env var (unconfirmed officially)
   - `CLAUDE_CODE_DISABLE_CLAUDE_MDS` env var (unconfirmed, community-mentioned)
@@ -107,4 +107,4 @@ A private research baseline was grepped first to establish whether community tra
 
 ## Time spent
 
-Roughly 70 minutes end-to-end: source triage, 10 Exa queries, targeted fetches, and write-up across the 7 sections.
+Roughly 70 minutes end-to-end — source triage, 10 Exa queries, targeted fetches, and write-up across the 7 sections.

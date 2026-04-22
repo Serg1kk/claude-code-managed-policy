@@ -1,22 +1,24 @@
-# Section 1 — Точные пути Managed Policy на трёх OS (VERIFIED)
+# Section 1 — Managed Policy paths on all three OS (VERIFIED)
 
-**Источник-пруф:** https://docs.claude.com/en/docs/claude-code/settings (раздел "Settings files"), https://docs.anthropic.com/en/docs/claude-code/memory (раздел "Managed policy")
+> **Language:** English · [Русский](paths-verified.ru.md)
+
+**Source proofs:** https://docs.claude.com/en/docs/claude-code/settings (section "Settings files"), https://docs.anthropic.com/en/docs/claude-code/memory (section "Managed policy")
 
 ---
 
-## Ключевое различие между managed-settings.json и Managed CLAUDE.md
+## Key distinction between managed-settings.json and Managed CLAUDE.md
 
-В enterprise есть **ДВА разных файла** с разным назначением:
+In enterprise there are **TWO different files** with different purposes:
 
-| Файл | Назначение | Обход? |
+| File | Purpose | Bypassable? |
 |---|---|---|
-| **`managed-settings.json`** | Hard policy enforcement — permissions, MCP, models, plugins, hooks, sandbox | Нельзя обойти, cannot be overridden |
-| **Managed CLAUDE.md** | Behavioral instructions — как Клод себя ведёт, company context | Нельзя исключить через `claudeMdExcludes`, НО Claude может их "прочитать и проигнорировать" — это **инструкции**, не hard enforcement |
+| **`managed-settings.json`** | Hard policy enforcement: permissions, MCP, models, plugins, hooks, sandbox | Cannot be bypassed, cannot be overridden |
+| **Managed CLAUDE.md** | Behavioral instructions: how Claude behaves, company context | Cannot be excluded via `claudeMdExcludes`, BUT Claude may "read and ignore" them. These are **instructions**, not hard enforcement |
 
-**Цитата из docs.anthropic.com/memory:**
+**Quote from docs.anthropic.com/memory:**
 > A managed CLAUDE.md and managed settings serve different purposes. Settings rules are enforced by the client regardless of what Claude decides to do. CLAUDE.md instructions shape Claude's behavior but are not a hard enforcement layer.
 
-**Для enterprise в 95% случаев primary механизм — `managed-settings.json`.** Managed CLAUDE.md добавляется сверху для "soft" company standards и awareness.
+**For enterprise, the primary mechanism in 95% of cases is `managed-settings.json`.** Managed CLAUDE.md is layered on top for "soft" company standards and awareness.
 
 ---
 
@@ -26,7 +28,7 @@
 ```
 /Library/Application Support/ClaudeCode/managed-settings.json
 /Library/Application Support/ClaudeCode/managed-settings.d/*.json   # drop-in fragments (v2.1.83+)
-/Library/Application Support/ClaudeCode/managed-mcp.json            # отдельный файл для MCP config
+/Library/Application Support/ClaudeCode/managed-mcp.json            # separate file for MCP config
 ```
 
 ### Managed CLAUDE.md (behavioral)
@@ -38,12 +40,12 @@
 ```
 com.anthropic.claudecode
 ```
-Deploy через configuration profiles: Jamf Pro, Kandji (Iru), Intune for Mac, ProfileCreator, iMazing Profile Editor. Top-level keys plist'а 1:1 mapping к `managed-settings.json`, nested = plist dict, arrays = plist arrays.
+Deploy via configuration profiles: Jamf Pro, Kandji (Iru), Intune for Mac, ProfileCreator, iMazing Profile Editor. Top-level plist keys map 1:1 to `managed-settings.json`, nested objects become plist dicts, and arrays become plist arrays.
 
-### Требования к permissions
-- Директория `/Library/Application Support/ClaudeCode/` требует **admin privileges** для записи → developer не может modify
-- Даже если файл отсутствует, CLI работает (graceful degradation)
-- Если файл есть но нет read-permission — CLI стартует без managed policies (это фича, не баг)
+### Permission requirements
+- The `/Library/Application Support/ClaudeCode/` directory requires **admin privileges** to write to → developers cannot modify it
+- Even if the file is absent, the CLI still works (graceful degradation)
+- If the file exists but read permission is missing, the CLI starts without managed policies (this is a feature, not a bug)
 
 ---
 
@@ -51,7 +53,7 @@ Deploy через configuration profiles: Jamf Pro, Kandji (Iru), Intune for Mac
 
 ### managed-settings.json
 ```
-/etc/claude-code/managed-settings.json                # canonical (с дефисом!)
+/etc/claude-code/managed-settings.json                # canonical (with a hyphen!)
 /etc/claude-code/managed-settings.d/*.json            # drop-in
 /etc/claude-code/managed-mcp.json
 ```
@@ -61,8 +63,8 @@ Deploy через configuration profiles: Jamf Pro, Kandji (Iru), Intune for Mac
 /etc/claude-code/CLAUDE.md
 ```
 
-### NO MDM domain для Linux
-Anthropic не предоставляет нативного MDM integration для Linux — deployment идёт через **config-management tools:**
+### NO MDM domain for Linux
+Anthropic does not provide native MDM integration for Linux. Deployment happens through **config-management tools:**
 - Ansible playbooks
 - Puppet / Chef
 - Shell scripts + SSH rollout
@@ -92,31 +94,31 @@ Community playbooks (systemprompt.io guide):
       notify: verify settings
 ```
 
-### Variant paths — которые **не работают**
-- ❌ `/etc/claude/CLAUDE.md` — **неверный путь**, встречается в некоторых community-постах; canonical — `/etc/claude-code/` (с дефисом)
-- ❌ `/usr/local/etc/claude-code/` — не поддерживается
-- ❌ `~/.claude/managed-settings.json` — это **user-level**, не managed policy (не имеет managed-only-keys)
+### Variant paths that **do not work**
+- ❌ `/etc/claude/CLAUDE.md`: **wrong path**, shows up in some community posts. The canonical path is `/etc/claude-code/` (with a hyphen)
+- ❌ `/usr/local/etc/claude-code/`: not supported
+- ❌ `~/.claude/managed-settings.json`: this is **user-level**, not managed policy (it has no managed-only keys)
 
 ---
 
 ## Windows
 
-### managed-settings.json (ИЗМЕНИЛОСЬ в v2.1.75)
+### managed-settings.json (CHANGED in v2.1.75)
 ```
 C:\Program Files\ClaudeCode\managed-settings.json                    # ✅ canonical (v2.1.75+)
 C:\Program Files\ClaudeCode\managed-settings.d\*.json                # drop-in
 C:\Program Files\ClaudeCode\managed-mcp.json
 ```
 
-**⚠️ DEPRECATED (не работает с v2.1.75):**
+**⚠️ DEPRECATED (does not work as of v2.1.75):**
 ```
-C:\ProgramData\ClaudeCode\managed-settings.json                      # ❌ устарело
+C:\ProgramData\ClaudeCode\managed-settings.json                      # ❌ obsolete
 ```
 
-Прямая цитата из docs.claude.com/settings:
+Direct quote from docs.claude.com/settings:
 > The legacy Windows path `C:\ProgramData\ClaudeCode\managed-settings.json` is no longer supported as of v2.1.75. Administrators who deployed settings to that location must migrate files to `C:\Program Files\ClaudeCode\managed-settings.json`.
 
-Некоторые **community-форки** документации (`claude.yourdocs.dev`, mintlify-форки) всё ещё показывают `ProgramData` — это старое зеркало, ignore.
+Some **community forks** of the documentation (`claude.yourdocs.dev`, mintlify forks) still show `ProgramData`. That is an old mirror, ignore it.
 
 ### Managed CLAUDE.md
 ```
@@ -125,18 +127,18 @@ C:\Program Files\ClaudeCode\CLAUDE.md
 
 ### Registry keys (MDM / GPO)
 ```
-# Machine-level (admin, highest priority within registry tier)
+# Machine-level (admin, highest priority within the registry tier)
 HKLM\SOFTWARE\Policies\ClaudeCode
-  Settings  (REG_SZ или REG_EXPAND_SZ)  — JSON string со всеми настройками
+  Settings  (REG_SZ or REG_EXPAND_SZ)  — JSON string with all settings
 
-# User-level (lowest registry priority — используется только если admin source отсутствует)
+# User-level (lowest registry priority — used only if no admin source is present)
 HKCU\SOFTWARE\Policies\ClaudeCode
-  Settings  (REG_SZ или REG_EXPAND_SZ)
+  Settings  (REG_SZ or REG_EXPAND_SZ)
 ```
 
-Deploy через:
+Deploy via:
 - Group Policy (GPO Preferences → Registry)
-- Microsoft Intune (Configuration Profile → Custom template → OMA-URI, или Win32 app + PowerShell script)
+- Microsoft Intune (Configuration Profile → Custom template → OMA-URI, or Win32 app + PowerShell script)
 - PowerShell deployment:
 ```powershell
 New-Item -Path "HKLM:\SOFTWARE\Policies\ClaudeCode" -Force
@@ -146,22 +148,22 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\ClaudeCode" `
 
 ---
 
-## Precedence внутри managed tier (highest → lowest)
+## Precedence inside the managed tier (highest → lowest)
 
-1. **Server-managed settings** (Claude.ai admin console) — available только Teams/Enterprise plans
+1. **Server-managed settings** (Claude.ai admin console): available only on Teams/Enterprise plans
 2. **MDM / OS-level policies:**
    - macOS plist (`com.anthropic.claudecode`)
    - Windows HKLM registry (`HKLM\SOFTWARE\Policies\ClaudeCode\Settings`)
-3. **File-based:** `managed-settings.json` + `managed-settings.d/*.json` в system directory
+3. **File-based:** `managed-settings.json` + `managed-settings.d/*.json` in the system directory
 4. **HKCU registry** (Windows only, lowest managed priority)
 
-**Критично:** только **один** managed source активен. Если server-managed задан — MDM/file-based игнорируются. Источники **НЕ мёрджатся** между собой (в отличие от drop-in фрагментов внутри одного source).
+**Critical:** only **one** managed source is active. If server-managed is set, MDM/file-based are ignored. Sources are **NOT merged** with each other (in contrast to drop-in fragments inside a single source).
 
 ---
 
 ## Drop-in directory `managed-settings.d/` (systemd-style)
 
-Добавлено в **v2.1.83**. Позволяет разным командам пушить **независимые фрагменты**:
+Added in **v2.1.83**. Lets different teams push **independent fragments**:
 
 ```
 /Library/Application Support/ClaudeCode/
@@ -174,55 +176,55 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\ClaudeCode" `
 ```
 
 **Merge rules:**
-- Scalar (string, number, boolean) — later file wins
-- Arrays — concatenated + de-duplicated
-- Objects — deep-merged
+- Scalars (string, number, boolean): the later file wins
+- Arrays: concatenated + de-duplicated
+- Objects: deep-merged
 
-Hidden files (starting with `.`) ignored. Use numeric prefixes для управления порядком.
+Hidden files (starting with `.`) are ignored. Use numeric prefixes to control ordering.
 
-**Usecase:** security team владеет `10-security.json`, DevOps владеет `20-devops.json`, Compliance — `30-audit.json`. Каждая команда деплоит свою через свой CI/MDM pipeline, без координации.
+**Use case:** the security team owns `10-security.json`, DevOps owns `20-devops.json`, Compliance owns `30-audit.json`. Each team deploys its own file through its own CI/MDM pipeline, with no cross-team coordination required.
 
 ---
 
-## Env variable для path override?
+## Env variable for path override?
 
-**Официально — нет.** В документации Anthropic v2.1.x **нет упоминания** `CLAUDE_MANAGED_SETTINGS_PATH` или аналога.
+**Officially, no.** The Anthropic v2.1.x documentation contains **no mention** of `CLAUDE_MANAGED_SETTINGS_PATH` or any equivalent.
 
-⚠️ В некоторых community-источниках (mintlify forks, старые guides) упоминается:
+⚠️ Some community sources (mintlify forks, older guides) mention:
 ```bash
 export CLAUDE_MANAGED_SETTINGS_PATH="/custom/path/managed-settings.json"
 ```
-— но это **не подтверждено** официальной документацией. Возможно это старая фича до v2.1.x или community-миф. **Не полагаться** пока не валидировано прямым тестом на текущей версии CLI.
+But this is **not confirmed** by official documentation. It may be an old feature that predates v2.1.x or a community myth. **Do not rely on it** unless validated by a direct test against the current CLI version.
 
 ---
 
-## Как проверить что applied
+## How to verify that it was applied
 
-Внутри Claude Code запустить:
+Inside Claude Code, run:
 ```
 /status
 ```
-Вывод покажет **source settings** и какой managed layer активен:
+The output shows **settings sources** and which managed layer is active:
 ```
 Settings sources: Local, Enterprise managed policies, Command line arguments
 ```
-Если "Enterprise managed policies" в списке → managed-settings.json / server-managed / MDM активен.
+If "Enterprise managed policies" appears in the list → managed-settings.json / server-managed / MDM is active.
 
-Также:
+Also:
 ```
 /permissions
 ```
-— покажет все permission rules и из какого settings.json источника они пришли (managed / user / project / local).
+This shows every permission rule and the settings.json source it came from (managed / user / project / local).
 
 ---
 
-## Anti-patterns — чего НЕ делать
+## Anti-patterns: what NOT to do
 
-- ❌ Не класть `managed-settings.json` в `~/.claude/` — это user-level, managed-only-keys не работают
-- ❌ Не использовать старый Windows path `C:\ProgramData\ClaudeCode\` — deprecated с v2.1.75
-- ❌ Не полагаться на `CLAUDE_MANAGED_SETTINGS_PATH` env var — не документирован официально
-- ❌ Не пушить `managed-settings.json` через project-level `.claude/settings.json` — не поднимется в managed tier
-- ❌ Не комбинировать несколько managed sources думая что они сольются — только один активен
-- ❌ Не забыть про `managed-settings.d/` если нужна модульность (избегать монолита)
+- ❌ Do not put `managed-settings.json` in `~/.claude/`. That is user-level, managed-only keys will not work
+- ❌ Do not use the old Windows path `C:\ProgramData\ClaudeCode\`. Deprecated as of v2.1.75
+- ❌ Do not rely on the `CLAUDE_MANAGED_SETTINGS_PATH` env var. It is not officially documented
+- ❌ Do not ship `managed-settings.json` via a project-level `.claude/settings.json`. It will not be promoted into the managed tier
+- ❌ Do not combine multiple managed sources expecting them to merge. Only one is active
+- ❌ Do not forget about `managed-settings.d/` when you need modularity (avoid a monolith)
 
 ---

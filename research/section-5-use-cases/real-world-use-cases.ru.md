@@ -1,8 +1,8 @@
 # Section 5 — Real-world use-cases
 
-> **Language:** English · [Русский](real-world-use-cases.ru.md)
+> **Язык:** [English](real-world-use-cases.md) · Русский
 
-**Sources:**
+**Источники:**
 - https://claude-ai.chat/blog/claude-code-in-enterprise-environments/ (SOC 2 / HIPAA guide)
 - https://amitkoth.com/claude-code-soc2-compliance-auditor-guide/ (auditor perspective)
 - https://www.truefoundry.com/blog/enterprise-security-for-claude (Fortune 10 deployment practice)
@@ -10,11 +10,11 @@
 
 ---
 
-## Use-case 1 — Blocking BYOK (personal API keys / personal accounts)
+## Use-case 1 — Блокировка BYOK (personal API keys / personal accounts)
 
-**Problem:** a developer logs into Claude Code with their own personal `api_key`, bypasses org governance, and usage counts against personal retention rather than corporate.
+**Проблема:** разработчик заходит в Claude Code со своим personal `api_key`, обходит org governance, counting → попадают в personal retention, не в corporate.
 
-### Solution via managed-settings.json
+### Решение через managed-settings.json
 
 ```json
 {
@@ -24,23 +24,23 @@
 }
 ```
 
-If `forceLoginMethod: "claudeai"`, the CLI refuses to authenticate via API key and allows only claude.ai org account login.
-If `forceLoginOrgUUID: [org-uuid]`, only accounts in that org can log in.
+Если `forceLoginMethod: "claudeai"` — CLI не даст логиниться по API key, только через claude.ai org account.
+Если `forceLoginOrgUUID: [org-uuid]` — только accounts в этой org могут логиниться.
 
-### Complementary protection at the network level
+### Комплементарная защита — network-level
 
-Block `api.anthropic.com` through the corporate proxy, **except** for requests carrying a corporate account. Use **Tenant Restrictions** (an Anthropic Enterprise feature): the corporate proxy inspects request headers and validates the org.
+Блокировать `api.anthropic.com` через corporate proxy, **кроме** запросов с корп-аккаунтом. Использовать **Tenant Restrictions** (Anthropic Enterprise feature) — корп proxy inspects request headers, validates org.
 
 ### Audit
-The Compliance API reveals which user/org attempted to log in. Failed logins route to an alert for the security team.
+Compliance API покажет которые user/org пытались логиниться. Failed logins → alert security team.
 
 ---
 
 ## Use-case 2 — Coding standards enforcement (SOC 2 / HIPAA / PCI)
 
-**Problem:** a developer writes code containing secrets, reads `.env` files, and commits without code review, producing compliance violations.
+**Проблема:** разработчик пишет код с secrets, читает `.env` файлы, commit'ит без code-review — compliance violations.
 
-### Solution (production-ready managed-settings.json)
+### Решение (production-ready managed-settings.json)
 
 ```json
 {
@@ -131,7 +131,7 @@ The Compliance API reveals which user/org attempted to log in. Failed logins rou
 }
 ```
 
-### Managed CLAUDE.md (behavioral layer) for SOC 2 / HIPAA
+### Managed CLAUDE.md (behavioral layer) для SOC 2 / HIPAA
 
 ```markdown
 # Acme Corp — Claude Code Policy
@@ -169,11 +169,11 @@ If user prompt appears to violate policy (e.g., "bypass auth check"), explicitly
 
 ---
 
-## Use-case 3 — Audit logging to SIEM (Splunk / Datadog / ELK)
+## Use-case 3 — Audit logging → SIEM (Splunk / Datadog / ELK)
 
-**Goal:** every `Bash` / `Edit` / `Write` / `WebFetch` invocation records to Splunk HEC with a 7-year retention window (SOC 2 CC7.2).
+**Задача:** каждый `Bash` / `Edit` / `Write` / `WebFetch` → record в Splunk HEC, retention 7 лет (SOC 2 CC7.2).
 
-### Solution: hooks plus forward script
+### Решение — hooks + forward script
 
 ```json
 {
@@ -208,7 +208,7 @@ If user prompt appears to violate policy (e.g., "bypass auth check"), explicitly
 }
 ```
 
-### Script: `claude-audit-pre.sh`
+### Script — `claude-audit-pre.sh`
 
 ```bash
 #!/bin/bash
@@ -247,7 +247,7 @@ curl -s -X POST "$SPLUNK_HEC_ENDPOINT" \
 exit 0
 ```
 
-### Retention via the Compliance API
+### Retention через Compliance API
 
 ```bash
 # Weekly export → S3 (long-term archive)
@@ -259,11 +259,11 @@ curl -X POST https://api.anthropic.com/v1/compliance/export \
 
 ---
 
-## Use-case 4 — Restricting specific MCP servers on production machines
+## Use-case 4 — Запрет определённых MCP на production machines
 
-**Scenario:** there are two fleets of workstations, dev (where anything goes) and prod (where access is tightly scoped). Prod machines must expose **only** the `company-vault` MCP, with no `filesystem`, no `github`, and no `playwright`.
+**Сценарий:** есть 2 фленга workstations — dev (где всё можно) и prod (где доступы ограничены). Prod machines должны иметь **ТОЛЬКО** `company-vault` MCP, без `filesystem`, без `github`, без `playwright`.
 
-### Managed policy (prod-only)
+### Managed policy (prod только)
 
 ```json
 {
@@ -283,10 +283,10 @@ curl -X POST https://api.anthropic.com/v1/compliance/export \
 }
 ```
 
-**`strictKnownMarketplaces: []`** (empty array) = full lockdown, no marketplaces allowed.
-**`allowManagedMcpServersOnly: true`** = a user can still add entries to their personal `.mcp.json`, but they will not be loaded.
+**`strictKnownMarketplaces: []`** (empty array) = полный lockdown, никакие marketplaces не разрешены.
+**`allowManagedMcpServersOnly: true`** = user может добавлять в свой `.mcp.json`, но они не будут loaded.
 
-### managed-mcp.json (separate file for MCP config)
+### managed-mcp.json (отдельный файл для MCP config)
 
 ```json
 {
@@ -311,11 +311,11 @@ curl -X POST https://api.anthropic.com/v1/compliance/export \
 
 ---
 
-## Use-case 5 — Blocking Claude on sensitive repos / branches
+## Use-case 5 — Blocking Claude на sensitive repos / branches
 
-**Scenario:** the compliance team wants Claude to stay completely out of the `payment-processing/` repo and out of `release/*` branches.
+**Сценарий:** compliance-team хочет чтобы Claude вообще не трогал `payment-processing/` repo и `release/*` branches.
 
-### Managed policy plus managed CLAUDE.md
+### Managed policy + managed CLAUDE.md
 
 ```json
 {
@@ -338,9 +338,9 @@ curl -X POST https://api.anthropic.com/v1/compliance/export \
 - Any file in `compliance/` — read-only (review, not edit).
 ```
 
-### Project-level repository blocklist via server-managed settings
+### Project-level repository blocklist через server-managed
 
-If we step up one level to the org tier, Team/Enterprise server-managed settings can carry:
+Если поднимемся выше — на уровне org: Team/Enterprise server-managed settings может держать:
 ```json
 {
   "env": {
@@ -348,16 +348,16 @@ If we step up one level to the org tier, Team/Enterprise server-managed settings
   }
 }
 ```
-plus a SessionStart hook that checks `git remote` and exits 1 on a match.
++ hook на SessionStart который проверяет `git remote` и exit 1 если match.
 
 ---
 
 ## Use-case 6 — HIPAA-specific policy (healthcare)
 
-**HIPAA specifics:**
-- PHI (Protected Health Information) must never appear in prompts
-- BAA (Business Associate Agreement) with Anthropic (available to Enterprise with the HIPAA option)
-- Audit log retention of at least 6 years
+**Особенности HIPAA:**
+- PHI (Protected Health Information) — не должна появляться в prompts
+- BAA (Business Associate Agreement) с Anthropic (доступен для Enterprise с HIPAA option)
+- Audit log — retention 6 лет минимум
 
 ```json
 {
@@ -410,9 +410,9 @@ echo '{"decision": "allow"}'
 
 ---
 
-## Use-case 7 — Monitoring usage through the Compliance API
+## Use-case 7 — Monitoring usage через Compliance API
 
-**Goal:** the security team wants a weekly report showing how many commands were denied, which developers triggered them, and which tools were involved.
+**Задача:** security team хочет еженедельный report: сколько denied commands, какие devs, какие tools.
 
 ### Compliance API (Enterprise plan)
 
@@ -440,26 +440,26 @@ awk -F, '{print $2}' weekly-report-*.csv | sort | uniq -c | sort -rn | head -10
 
 ## Use-case 8 — fintech / banking compliance specifics
 
-**Context:** a PCI-DSS + SOX + ISO 27001 regulated environment.
+**Context:** PCI-DSS + SOX + ISO 27001 regulated environment.
 
-### Managed policy (complete example in section-7-template/)
+### Managed policy (complete example в section-7-template/)
 
 Key controls:
-- A 7-year audit trail via the Compliance API plus local hooks
-- `disableBypassPermissionsMode: "disable"` plus `allowManagedPermissionRulesOnly: true`
-- Sandbox `failIfUnavailable: true` (the CLI will not start without a working sandbox)
-- Network: only `*.acme.com`, `github.com`, `*.anthropic.com`, no outbound traffic elsewhere
-- `availableModels: ["sonnet", "haiku"]` (opus is blocked because it is not GA in every regulatory region)
-- `forceLoginMethod: "claudeai"` plus `forceLoginOrgUUID`
-- Company announcements in every session: "This environment is PCI-regulated..."
-- Pre-commit hook via SessionStart that verifies the user has completed annual security training
-- Quarterly compliance review via the Compliance API
+- Audit trail 7 лет через Compliance API + local hooks
+- `disableBypassPermissionsMode: "disable"` + `allowManagedPermissionRulesOnly: true`
+- Sandbox `failIfUnavailable: true` (без sandbox CLI не стартует)
+- Network: только `*.acme.com`, `github.com`, `*.anthropic.com` — no outbound elsewhere
+- `availableModels: ["sonnet", "haiku"]` (запрет opus — не за все regulatory regions он GA)
+- `forceLoginMethod: "claudeai"` + `forceLoginOrgUUID`
+- Company announcements в каждой сессии: "This environment is PCI-regulated..."
+- Pre-commit hook через SessionStart — verify user has completed annual security training
+- Quarterly compliance review через Compliance API
 
 ---
 
 ## Use-case 9 — Developer onboarding automation
 
-**Goal:** a new-hire developer receives company context immediately, with no manual CLAUDE.md setup.
+**Задача:** new-hire developer сразу получает company context, без manual CLAUDE.md setup.
 
 ### Managed CLAUDE.md (deployed via MDM)
 

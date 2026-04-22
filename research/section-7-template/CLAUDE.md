@@ -1,12 +1,12 @@
 # Acme Corp — Managed Claude Code Policy
 
-> Эта политика (managed CLAUDE.md) применяется ко ВСЕМ разработчикам Acme Corp.
-> Физический путь на диске:
+> This policy (managed CLAUDE.md) applies to ALL Acme Corp developers.
+> On-disk paths:
 > - macOS: `/Library/Application Support/ClaudeCode/CLAUDE.md`
 > - Linux/WSL: `/etc/claude-code/CLAUDE.md`
 > - Windows: `C:\Program Files\ClaudeCode\CLAUDE.md`
 >
-> Файл управляется IT / Security через MDM. **Не редактируйте локально** — изменения будут переписаны при следующем MDM-sync.
+> This file is managed by IT / Security via MDM. **Do not edit locally**: changes will be overwritten on the next MDM sync.
 
 ---
 

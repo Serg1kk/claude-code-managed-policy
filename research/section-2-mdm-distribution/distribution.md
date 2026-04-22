@@ -1,6 +1,8 @@
-# Section 2 — MDM distribution механика
+# Section 2 — MDM distribution mechanics
 
-**Источники:**
+> **Language:** English · [Русский](distribution.ru.md)
+
+**Sources:**
 - https://docs.claude.com/en/docs/claude-code/settings#managed-settings
 - https://code.claude.com/docs/en/server-managed-settings.md
 - https://github.com/anthropics/claude-code/tree/main/examples/mdm (official starter templates)
@@ -10,37 +12,37 @@
 
 ---
 
-## Три канала доставки (по official docs)
+## Three delivery channels (per official docs)
 
 ### 1. Server-managed settings (NEW, Q4 2025)
 
-**Что это:** админ в Claude.ai → Admin Settings → Claude Code → Managed settings → пишет JSON, клиент автоматом подтягивает при логине или hourly polling.
+**What it is:** an admin goes to Claude.ai → Admin Settings → Claude Code → Managed settings, writes JSON, and the client picks it up automatically on login or via hourly polling.
 
-**Требования:**
-- Claude for Teams plan (CLI v2.1.38+) или Claude for Enterprise plan (v2.1.30+)
-- Клиент имеет network access к `api.anthropic.com`
-- **НЕ требует** MDM, device management infrastructure, admin access к ОС
+**Requirements:**
+- Claude for Teams plan (CLI v2.1.38+) or Claude for Enterprise plan (v2.1.30+)
+- Client has network access to `api.anthropic.com`
+- **Does NOT require** MDM, device management infrastructure, or admin access to the OS
 
-**Плюсы:**
-- Работает на BYOD / unmanaged devices (где IT не ставит Jamf)
-- Changes deploy мгновенно (при restart / hourly poll)
-- Нет задержек на MDM push
+**Pros:**
+- Works on BYOD / unmanaged devices (where IT does not deploy Jamf)
+- Changes deploy instantly (on restart / hourly poll)
+- No delays waiting for an MDM push
 
-**Минусы / limitations:**
-- Только uniform per org (нет per-group policies — это всё ещё limitation v2.1.x)
-- Requires Claude for Teams / Enterprise plan (not available on Pro individual subscriptions)
-- Settings полностью **offline** недоступны — нужен live connection к api.anthropic.com при fetch
-- Если полагаться + `forceRemoteSettingsRefresh: true` — CLI **fail-closed** при offline startup
-- **Нельзя использовать** при работе через сторонних провайдеров (Bedrock / Vertex / Foundry) — только direct Anthropic API
+**Cons / limitations:**
+- Only uniform per org (no per-group policies: still a limitation in v2.1.x)
+- Requires a Claude for Teams / Enterprise plan (not available on Pro individual subscriptions)
+- Settings are fully **unavailable offline**: a live connection to api.anthropic.com is required at fetch time
+- If you rely on `forceRemoteSettingsRefresh: true`, the CLI is **fail-closed** on offline startup
+- **Cannot be used** when working through third-party providers (Bedrock / Vertex / Foundry): direct Anthropic API only
 
 **Configure flow:**
 ```
 1. Organization Owner / Primary Owner → claude.ai → Admin Settings → Claude Code → Managed settings
 2. Paste JSON (same schema as managed-settings.json)
-3. Save → rollout ~1 hour (next user startup или polling cycle)
+3. Save → rollout ~1 hour (next user startup or polling cycle)
 ```
 
-Пример (from official docs):
+Example (from official docs):
 ```json
 {
   "permissions": {
@@ -53,32 +55,32 @@
 
 ### 2. MDM / OS-level policies
 
-#### macOS через Jamf Pro / Kandji / Intune for Mac / Addigy
+#### macOS via Jamf Pro / Kandji / Intune for Mac / Addigy
 
-**Механика:** Configuration Profile деплоится на managed preferences domain `com.anthropic.claudecode`. plist top-level keys 1:1 mapping к managed-settings.json.
+**Mechanism:** a Configuration Profile is deployed to the managed preferences domain `com.anthropic.claudecode`. The plist top-level keys map 1:1 to managed-settings.json.
 
-**Jamf Pro пошагово:**
+**Jamf Pro step by step:**
 ```
 Jamf Pro Console → Computers → Configuration Profiles → + New
   → Application & Custom Settings payload
   → Preference Domain: com.anthropic.claudecode
-  → Upload plist file (или использовать Jamf Pro profile editor)
-  → Scope: Developer Smart Group (не all-fleet)
+  → Upload plist file (or use the Jamf Pro profile editor)
+  → Scope: Developer Smart Group (not all-fleet)
   → Deploy
 ```
 
-Либо через **Files and Processes** payload — drops `managed-settings.json` прямо в `/Library/Application Support/ClaudeCode/`.
+Alternatively, via the **Files and Processes** payload: drop `managed-settings.json` directly into `/Library/Application Support/ClaudeCode/`.
 
-**Kandji пошагово:**
+**Kandji step by step:**
 ```
 Kandji → Library → Custom Profile → Upload .mobileconfig
-  или
+  or
 Library → Custom Script (Audit & Enforce):
   - Script checks file hash
   - Replaces if drift detected
 ```
 
-**Addigy пошагово** (из https://addigy.com/blog/manage-claude-code-policies-addigy/):
+**Addigy step by step** (from https://addigy.com/blog/manage-claude-code-policies-addigy/):
 ```bash
 # Installation Script
 #!/bin/bash
@@ -96,11 +98,11 @@ EXPECTED_HASH="sha256-of-current-policy"
 [[ $(shasum -a 256 "$POLICY_PATH" 2>/dev/null | awk '{print $1}') == "$EXPECTED_HASH" ]] && exit 0 || exit 1
 ```
 
-**Intune for Mac:** Configuration profile → Custom Template → upload `.mobileconfig` targeting `com.anthropic.claudecode` preference domain.
+**Intune for Mac:** Configuration profile → Custom Template → upload `.mobileconfig` targeting the `com.anthropic.claudecode` preference domain.
 
-#### Windows через Group Policy / Microsoft Intune
+#### Windows via Group Policy / Microsoft Intune
 
-**Механика:** REG_SZ JSON в `HKLM\SOFTWARE\Policies\ClaudeCode\Settings` (machine-level) или `HKCU\SOFTWARE\Policies\ClaudeCode\Settings` (user-level fallback).
+**Mechanism:** REG_SZ JSON in `HKLM\SOFTWARE\Policies\ClaudeCode\Settings` (machine-level) or `HKCU\SOFTWARE\Policies\ClaudeCode\Settings` (user-level fallback).
 
 **Group Policy:**
 ```
@@ -114,21 +116,21 @@ Group Policy Management Editor →
   → Link GPO to developer OU
 ```
 
-**Intune через Configuration Profile:**
+**Intune via Configuration Profile:**
 ```
 Intune → Devices → Configuration Profiles → + Create → Windows 10+
-  → Templates → Administrative Templates → нет (нет Claude Code ADMX)
+  → Templates → Administrative Templates → none (no Claude Code ADMX)
   → Settings catalog → Registry-based custom:
        OMA-URI: ./Device/Vendor/MSFT/Registry/HKLM/SOFTWARE/Policies/ClaudeCode/Settings
        Data type: String
        Value: <JSON>
 ```
 
-Или через **Win32 app** packaging `managed-settings.json` + PowerShell install script.
+Or via a **Win32 app** packaging `managed-settings.json` together with a PowerShell install script.
 
-**PowerShell deployment (бейс):**
+**PowerShell deployment (baseline):**
 ```powershell
-# На target machine под admin
+# On target machine as admin
 $settings = @{
     permissions = @{
         deny = @("Bash(curl *)", "Read(./.env)", "Read(./.env.*)")
@@ -270,11 +272,11 @@ execute 'validate_settings' do
 end
 ```
 
-#### Shell script (простейший вариант)
+#### Shell script (simplest option)
 
 ```bash
 #!/bin/bash
-# deploy-claude-policy.sh — для small teams без configuration management
+# deploy-claude-policy.sh — for small teams without configuration management
 set -euo pipefail
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -305,76 +307,76 @@ done
 
 **Repo:** https://github.com/anthropics/claude-code/tree/main/examples/mdm
 
-Включает стартерные шаблоны для:
-- **Jamf Pro** — `.mobileconfig` profile
-- **Kandji (Iru)** — Custom Profile format
-- **Microsoft Intune** — Configuration Profile JSON
-- **Group Policy (GPO)** — ADMX/ADML templates
+Includes starter templates for:
+- **Jamf Pro**: `.mobileconfig` profile
+- **Kandji (Iru)**: Custom Profile format
+- **Microsoft Intune**: Configuration Profile JSON
+- **Group Policy (GPO)**: ADMX/ADML templates
 
-Для Linux официальных stater-ов **нет** — используйте Ansible/Puppet/Chef по примерам выше.
+There are **no** official starters for Linux. Use the Ansible/Puppet/Chef examples above instead.
 
 ---
 
-## Phased rollout playbook (60 разработчиков fintech)
+## Phased rollout playbook (60 fintech developers)
 
-**Из https://systemprompt.io/guides/claude-code-organisation-rollout:**
+**From https://systemprompt.io/guides/claude-code-organisation-rollout:**
 
-| Неделя | Что делать | Аудитория |
+| Week | What to do | Audience |
 |---|---|---|
-| **Week 1** | Написать draft policy, версионировать в git, code-review от security team | 0 devs (admin prep) |
-| **Week 2** | Pilot group: 5-10 senior devs. Deploy через Jamf/Intune pilot scope. Сбор feedback, tweaks policy | 5-10 |
-| **Week 3** | Expand pilot до 20 devs + mandatory onboarding session. Добавить Managed CLAUDE.md для company context | 20 |
-| **Week 4** | Full rollout на all developer scope. Enable `forceRemoteSettingsRefresh` если нужен fail-closed | 60 |
-| **Week 5+** | Ongoing: policy changes через PR в git-репо, rollout через MDM, audit log review weekly | all |
+| **Week 1** | Write draft policy, version it in git, get code-review from the security team | 0 devs (admin prep) |
+| **Week 2** | Pilot group: 5-10 senior devs. Deploy via Jamf/Intune pilot scope. Gather feedback, tweak policy | 5-10 |
+| **Week 3** | Expand pilot to 20 devs + mandatory onboarding session. Add Managed CLAUDE.md for company context | 20 |
+| **Week 4** | Full rollout to the entire developer scope. Enable `forceRemoteSettingsRefresh` if you need fail-closed | 60 |
+| **Week 5+** | Ongoing: policy changes via PRs in the git repo, rollout via MDM, audit log review weekly | all |
 
 **Rollback strategy:**
-1. Держать prev policy versioned в git (например, `managed-settings-v1.2.json`)
-2. При проблеме — push prev version через MDM (Jamf/Intune revert)
-3. Для server-managed — revert через Claude.ai admin console (хранит history)
-4. Emergency kill-switch — deploy пустой `{}` — managed policy effective minimum
+1. Keep prior policy versions in git (e.g., `managed-settings-v1.2.json`)
+2. On issues: push the previous version through MDM (Jamf/Intune revert)
+3. For server-managed: revert via the Claude.ai admin console (history is kept)
+4. Emergency kill-switch: deploy an empty `{}` as the effective minimum managed policy
 
 ---
 
-## Distinguishing server-managed vs endpoint-managed — когда какой использовать
+## Distinguishing server-managed vs endpoint-managed: when to use each
 
-| Сценарий | Рекомендация |
+| Scenario | Recommendation |
 |---|---|
-| BYOD / unmanaged laptops | Server-managed (не требует MDM) |
-| Enterprise Mac fleet с Jamf | Endpoint-managed через Jamf (tamper-resistant на OS-level) |
-| Windows enterprise с SCCM/Intune | Endpoint-managed через Intune/GPO |
-| Mixed Mac + Windows + Linux | Server-managed (unified, но требует Enterprise plan) |
-| Air-gapped / offline environments | Endpoint-managed (server-managed требует api.anthropic.com) |
-| Startup, нет IT-инфраструктуры | Server-managed (если есть Teams plan) или file-based через script |
+| BYOD / unmanaged laptops | Server-managed (no MDM required) |
+| Enterprise Mac fleet with Jamf | Endpoint-managed via Jamf (tamper-resistant at the OS level) |
+| Windows enterprise with SCCM/Intune | Endpoint-managed via Intune/GPO |
+| Mixed Mac + Windows + Linux | Server-managed (unified, but requires Enterprise plan) |
+| Air-gapped / offline environments | Endpoint-managed (server-managed requires api.anthropic.com) |
+| Startup with no IT infrastructure | Server-managed (if on a Teams plan) or file-based via script |
 | Contractors / vendors | Server-managed + `forceLoginOrgUUID` |
 
-**Security-tradeoff:** endpoint-managed **tamper-resistant на OS-level** — пользователь не может отредактировать файл без admin. Server-managed operates как client-side control — теоретически клиент можно подменить на unmanaged device.
+**Security tradeoff:** endpoint-managed is **tamper-resistant at the OS level**: users cannot edit the file without admin rights. Server-managed operates as a client-side control, so in theory the client could be swapped out on an unmanaged device.
 
 ---
 
 ## Platform-specific gotchas
 
 ### macOS
-- Если директория `/Library/Application Support/ClaudeCode/` не существует — создать вручную (mkdir -p) перед первым deploy
-- permissions должны быть `root:wheel 0755` (directory) + `root:wheel 0644` (files) — иначе user может не иметь read
-- SIP (System Integrity Protection) не защищает эту папку — users с admin могут её менять (но обычные developers — нет)
-- При деплое через Files and Processes (Jamf) — Jamf использует `sudo`, права правильные по умолчанию
+- If `/Library/Application Support/ClaudeCode/` does not exist, create it manually (mkdir -p) before the first deploy
+- Permissions must be `root:wheel 0755` (directory) + `root:wheel 0644` (files), otherwise users may not have read access
+- SIP (System Integrity Protection) does not protect this folder: users with admin can modify it (but regular developers cannot)
+- When deploying through Files and Processes (Jamf), Jamf uses `sudo`, so permissions are correct by default
 
 ### Windows
-- REG_SZ имеет лимит 1 MB на value — если policy большая, дробить в drop-in fragments
-- `HKLM\SOFTWARE\Policies\` лочится Group Policy — local admin не может modify без GPO
-- WSL работает с Linux path (`/etc/claude-code/`), НЕ с Windows registry — для WSL нужен отдельный deploy
-- **⚠️ Не использовать** `C:\ProgramData\ClaudeCode\` — deprecated с v2.1.75
+- REG_SZ has a 1 MB per-value limit. If the policy is large, split it into drop-in fragments
+- `HKLM\SOFTWARE\Policies\` is locked by Group Policy: local admins cannot modify it without GPO
+- WSL works with Linux paths (`/etc/claude-code/`), NOT with the Windows registry. WSL needs a separate deploy
+- **⚠️ Do not use** `C:\ProgramData\ClaudeCode\`: deprecated since v2.1.75
 
 ### Linux
-- Пакетных менеджеров для Claude Code **нет** (npm install -g, curl bash) — distribute через configuration management
-- Контейнеры / CI/CD: mount `/etc/claude-code/` read-only из host, или bake в image
-- NFS mounts — проверить что locking работает (некоторые NFS variants ломают CLI restart polling)
+- There are **no** package managers for Claude Code (npm install -g, curl bash). Distribute via configuration management
+- Containers / CI/CD: mount `/etc/claude-code/` read-only from the host, or bake it into the image
+- NFS mounts: verify that locking works (some NFS variants break CLI restart polling)
 
 ---
 
-## Validation после deploy
+## Validation after deploy
 
-Каждый deploy должен завершаться verify-шагом:
+Every deploy should end with a verify step:
 
 ```bash
 # 1. Validate JSON
@@ -397,14 +399,14 @@ claude /permissions | grep "deny"
 
 ## Maintenance / monitoring
 
-**Что мониторить:**
+**What to monitor:**
 - File hash drift (Kandji / Addigy conditions)
-- CLI version minimum (managed-settings.json `minimumVersion`) — чтобы user не мог downgrade до версии без managed support
-- Compliance API logs (Enterprise plan) — видны попытки denied команд
-- Hooks audit output (если настроены PostToolUse hooks в Splunk/Datadog)
+- CLI minimum version (managed-settings.json `minimumVersion`): prevent users from downgrading to a version without managed support
+- Compliance API logs (Enterprise plan): visible attempts at denied commands
+- Hooks audit output (if PostToolUse hooks are wired up in Splunk/Datadog)
 
 **Red flags:**
-- Users отчитываются что `/status` не показывает "Enterprise managed policies"
-- `managed-settings.json` permissions изменились без MDM push (tamper)
-- CLI fails to start после policy update (`forceRemoteSettingsRefresh: true` + api.anthropic.com unreachable)
-- Developers обходят через `--setting-source local` (bug #11872 — это НЕ работает для managed, они всё равно применяются; но если на user/project level стоят conflicting rules — могут быть surprises)
+- Users report that `/status` does not show "Enterprise managed policies"
+- `managed-settings.json` permissions changed without an MDM push (tamper)
+- CLI fails to start after a policy update (`forceRemoteSettingsRefresh: true` + api.anthropic.com unreachable)
+- Developers bypass via `--setting-source local` (bug #11872: this does NOT work for managed, which are still applied; but if conflicting rules exist at user/project level, surprises are possible)

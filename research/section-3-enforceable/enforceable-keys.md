@@ -1,39 +1,41 @@
-# Section 3 — Что enforceable через Managed Policy
+# Section 3 — What is enforceable through Managed Policy
 
-**Источники:**
-- https://docs.claude.com/en/docs/claude-code/settings (полная reference)
+> **Language:** English · [Русский](enforceable-keys.ru.md)
+
+**Sources:**
+- https://docs.claude.com/en/docs/claude-code/settings (full reference)
 - https://code.claude.com/docs/en/permissions.md (managed-only keys)
-- https://managed-settings.net/ (community reference builder — лучший UI)
+- https://managed-settings.net/ (community reference builder: the best UI)
 
 ---
 
-## Managed-only keys (не работают вне managed-settings.json)
+## Managed-only keys (do not work outside managed-settings.json)
 
-Эти ключи **читаются только из managed-settings.json / server-managed / MDM**. Если положить их в user/project settings — silent ignore.
+These keys are **read only from managed-settings.json / server-managed / MDM**. If placed in user or project settings, they are silently ignored.
 
-| Ключ | Описание | Пример value |
+| Key | Description | Example value |
 |---|---|---|
-| `allowManagedMcpServersOnly` | Только MCP servers из managed `allowedMcpServers` работают. User может добавить свои в `.mcp.json`, но они не загрузятся | `true` |
-| `allowManagedPermissionRulesOnly` | Только permission rules (allow/ask/deny) из managed settings применяются. User/project rules игнорируются | `true` |
-| `allowManagedHooksOnly` | Только hooks из managed + SDK + force-enabled plugins. User/project/plugin hooks блокируются | `true` |
-| `allowedChannelPlugins` | Allowlist channel plugins (Team/Enterprise "channels" feature) | `[{"marketplace": "claude-plugins-official", "plugin": "telegram"}]` |
-| `blockedMarketplaces` | Blocklist plugin marketplace sources — **не скачиваются** | `[{"source": "github", "repo": "untrusted/plugins"}]` |
-| `strictKnownMarketplaces` | Allowlist marketplaces. Empty array = lockdown (никаких marketplaces) | `[{"source": "github", "repo": "acme-corp/plugins"}]` |
-| `channelsEnabled` | Разрешить channels (Teams/Enterprise). Unset/false = блок | `true` |
-| `forceLoginMethod` | `"claudeai"` или `"console"` — ограничить тип аккаунта | `"claudeai"` |
-| `forceLoginOrgUUID` | UUID корп.орги (single или array). User не может логиниться вне этой орги | `"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"` |
-| `forceRemoteSettingsRefresh` | CLI startup блокируется пока не получит свежие server-managed settings. Fail-closed | `true` |
-| `pluginTrustMessage` | Custom message в warning при установке плагина | `"All plugins from our marketplace are approved by IT"` |
-| `sandbox.filesystem.allowManagedReadPathsOnly` | Только managed paths в `filesystem.allowRead`, user paths ignored. `denyRead` всё ещё мёрджится со всех уровней | `true` |
-| `network.allowManagedDomainsOnly` | Только managed `allowedDomains` + WebFetch allow rules. User domains ignored. Denied мёрджится | `true` |
-| `skipWebFetchPreflight` | Skip WebFetch blocklist preflight (для restrictive network envs) | `true` |
-| `sshConfigs` (managed mode) | SSH connections для Desktop env — когда из managed, read-only для user | `[{"id": "dev-vm", "name": "Dev VM", "sshHost": "user@dev.example.com"}]` |
+| `allowManagedMcpServersOnly` | Only MCP servers from the managed `allowedMcpServers` list work. A user can add their own entries to `.mcp.json`, but they will not load | `true` |
+| `allowManagedPermissionRulesOnly` | Only permission rules (allow/ask/deny) from managed settings apply. User/project rules are ignored | `true` |
+| `allowManagedHooksOnly` | Only hooks from managed + SDK + force-enabled plugins run. User/project/plugin hooks are blocked | `true` |
+| `allowedChannelPlugins` | Allowlist of channel plugins (Team/Enterprise "channels" feature) | `[{"marketplace": "claude-plugins-official", "plugin": "telegram"}]` |
+| `blockedMarketplaces` | Blocklist of plugin marketplace sources. **Not downloaded** | `[{"source": "github", "repo": "untrusted/plugins"}]` |
+| `strictKnownMarketplaces` | Allowlist of marketplaces. An empty array = lockdown (no marketplaces at all) | `[{"source": "github", "repo": "acme-corp/plugins"}]` |
+| `channelsEnabled` | Enable channels (Teams/Enterprise). Unset or false = blocked | `true` |
+| `forceLoginMethod` | `"claudeai"` or `"console"`: restrict the account type | `"claudeai"` |
+| `forceLoginOrgUUID` | UUID of the corporate org (single value or array). User cannot sign in to any org other than this | `"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"` |
+| `forceRemoteSettingsRefresh` | CLI startup is blocked until fresh server-managed settings are received. Fail-closed | `true` |
+| `pluginTrustMessage` | Custom message shown in the warning when a plugin is installed | `"All plugins from our marketplace are approved by IT"` |
+| `sandbox.filesystem.allowManagedReadPathsOnly` | Only managed paths are honored in `filesystem.allowRead`; user paths are ignored. `denyRead` still merges across all levels | `true` |
+| `network.allowManagedDomainsOnly` | Only managed `allowedDomains` + WebFetch allow rules apply. User domains are ignored. Denied entries still merge | `true` |
+| `skipWebFetchPreflight` | Skip the WebFetch blocklist preflight (for restrictive network environments) | `true` |
+| `sshConfigs` (managed mode) | SSH connections for the Desktop environment. When set from managed, read-only for the user | `[{"id": "dev-vm", "name": "Dev VM", "sshHost": "user@dev.example.com"}]` |
 
 ---
 
-## Настройки которые работают везде, но в managed получают highest precedence
+## Settings that work in any scope, but in managed get highest precedence
 
-Эти ключи читаются из любого scope, но managed-settings.json не может быть overridden — т.е. IT может **force-set** любое из них.
+These keys are read from any scope, but managed-settings.json cannot be overridden. In other words, IT can **force-set** any of them.
 
 ### Permissions (core enforcement)
 
@@ -53,16 +55,16 @@
 ```
 
 **Rule syntax:**
-- `Tool` — match all invocations of tool
-- `Tool(specifier)` — narrower match
-- `Bash(npm run *)` — любая `npm run ...` команда
-- `Read(./.env)` — конкретный file
-- `Read(./secrets/**)` — рекурсивно папка
-- `WebFetch(domain:example.com)` — requests к домену
-- `Agent(name-pattern)` — subagent invocations
-- `MCP(serverName)` — MCP tool calls
+- `Tool`: match all invocations of the tool
+- `Tool(specifier)`: narrower match
+- `Bash(npm run *)`: any `npm run ...` command
+- `Read(./.env)`: a specific file
+- `Read(./secrets/**)`: a folder, recursively
+- `WebFetch(domain:example.com)`: requests to a domain
+- `Agent(name-pattern)`: subagent invocations
+- `MCP(serverName)`: MCP tool calls
 
-**Precedence:** deny > ask > allow (first match wins). Managed deny — **нельзя обойти** lower-scope allow.
+**Precedence:** deny > ask > allow (first match wins). A managed deny **cannot be bypassed** by a lower-scope allow.
 
 ### Bypass controls
 
@@ -77,10 +79,10 @@
 }
 ```
 
-- `disableBypassPermissionsMode: "disable"` — блокирует `--dangerously-skip-permissions` CLI flag + `defaultMode: "bypassPermissions"`
-- `disableAutoMode: "disable"` — убирает `auto` из `Shift+Tab` cycle, `--permission-mode auto` rejected at startup
-- `disableSkillShellExecution: true` — блок `!` shell execution в skills и custom commands (user/project/plugin/additional-directory sources). **Bundled + managed skills не затронуты.**
-- `disableAllHooks` — полный блок hooks + custom statusline
+- `disableBypassPermissionsMode: "disable"`: blocks the `--dangerously-skip-permissions` CLI flag and `defaultMode: "bypassPermissions"`
+- `disableAutoMode: "disable"`: removes `auto` from the `Shift+Tab` cycle; `--permission-mode auto` is rejected at startup
+- `disableSkillShellExecution: true`: blocks `!` shell execution in skills and custom commands (user/project/plugin/additional-directory sources). **Bundled and managed skills are not affected.**
+- `disableAllHooks`: fully blocks hooks and the custom statusline
 
 ### Model restrictions
 
@@ -91,10 +93,10 @@
 }
 ```
 
-- `availableModels` — allowlist моделей. User не может `/model`-switch на не-listed. Работает и для CLI `--model` flag, и для `ANTHROPIC_MODEL` env var, и для Config tool.
-- `model` — initial default для сессии (не enforcement — user может переключать в пределах `availableModels`)
-- Merge: arrays concat'ятся + dedup через все scopes. **Для strict allowlist** — set в managed + `availableModels` **только там**.
-- **Default model picker option** не затронут `availableModels` — он всегда доступен.
+- `availableModels`: allowlist of models. The user cannot `/model`-switch to anything not listed. Also applies to the CLI `--model` flag, the `ANTHROPIC_MODEL` env var, and the Config tool.
+- `model`: initial default for the session (not enforcement: user may switch within `availableModels`)
+- Merge: arrays are concatenated and deduplicated across all scopes. **For a strict allowlist**, set `availableModels` in managed **only**.
+- The **Default model picker option** is not affected by `availableModels`: it is always available.
 
 ### Sandbox controls
 
@@ -124,12 +126,12 @@
 }
 ```
 
-- `failIfUnavailable: true` + `enabled: true` — **hard gate**, CLI exits если sandbox не доступен (missing deps, unsupported platform). Без failIfUnavailable — просто warning + unsandboxed execution.
-- `allowUnsandboxedCommands: false` — `dangerouslyDisableSandbox` escape hatch **полностью отключён**
-- `allowManagedReadPathsOnly: true` — user paths в `filesystem.allowRead` игнорируются
-- `allowManagedDomainsOnly: true` — user domains в `allowedDomains` + `WebFetch(domain:...)` игнорируются
+- `failIfUnavailable: true` + `enabled: true`: a **hard gate**. The CLI exits if the sandbox is not available (missing dependencies, unsupported platform). Without `failIfUnavailable` it is merely a warning plus unsandboxed execution.
+- `allowUnsandboxedCommands: false`: the `dangerouslyDisableSandbox` escape hatch is **fully disabled**
+- `allowManagedReadPathsOnly: true`: user paths in `filesystem.allowRead` are ignored
+- `allowManagedDomainsOnly: true`: user domains in `allowedDomains` and `WebFetch(domain:...)` are ignored
 
-### Hooks (для audit logging)
+### Hooks (for audit logging)
 
 ```json
 {
@@ -153,13 +155,13 @@
 ```
 
 Hook events:
-- `PreToolUse` — до permission check (можно approve/deny в обход permission system)
-- `PostToolUse` — после успешного выполнения
-- `SessionStart` — при старте CLI
+- `PreToolUse`: before the permission check (can approve or deny, bypassing the permission system)
+- `PostToolUse`: after successful execution
+- `SessionStart`: when the CLI starts
 - `SessionEnd`
 - `UserPromptSubmit`
 
-Hooks запускают shell commands на user machine — security review важен. Managed `hooks` показывают security-approval dialog user'у при первом запуске (он может increment runtime permission).
+Hooks execute shell commands on the user's machine, so a security review matters. Managed `hooks` display a security-approval dialog to the user on first run (which may increment runtime permission).
 
 ### MCP controls
 
@@ -174,7 +176,7 @@ Hooks запускают shell commands на user machine — security review в
 }
 ```
 
-`managed-mcp.json` (отдельный файл) — для конфигурации MCP серверов самих (не просто allow/deny, а полный config с command/args/env). Пример:
+`managed-mcp.json` (a separate file) is for configuring the MCP servers themselves (not just allow/deny, but the full config with command/args/env). Example:
 ```json
 {
   "mcpServers": {
@@ -274,58 +276,58 @@ Hooks запускают shell commands на user machine — security review в
 
 ---
 
-## Merge vs override — что происходит когда одно и то же ключ в разных scope
+## Merge vs override: what happens when the same key appears in different scopes
 
-| Тип поля | Merge behavior |
+| Field type | Merge behavior |
 |---|---|
-| `permissions.allow` / `ask` / `deny` | **Concat + dedup across scopes**, managed deny has highest precedence (overrides user/project allow if match) |
+| `permissions.allow` / `ask` / `deny` | **Concat + dedup across scopes**; managed deny has highest precedence (overrides a user/project allow on a match) |
 | `permissions.additionalDirectories` | Concat + dedup |
-| `availableModels` | Concat + dedup. Для strict allowlist — set ТОЛЬКО в managed |
-| `hooks` | Concat (каждый hook runs independently) — это точка для `allowManagedHooksOnly` |
-| `env` | Later scope wins per-key, но managed — highest |
-| `sandbox.filesystem.allowRead/allowWrite/denyRead/denyWrite` | Concat + dedup across ВСЕ scopes |
+| `availableModels` | Concat + dedup. For a strict allowlist, set ONLY in managed |
+| `hooks` | Concat (each hook runs independently): this is the lever for `allowManagedHooksOnly` |
+| `env` | Later scope wins per key, but managed is the highest |
+| `sandbox.filesystem.allowRead/allowWrite/denyRead/denyWrite` | Concat + dedup across ALL scopes |
 | `sandbox.network.allowedDomains/deniedDomains` | Concat + dedup |
 | `allowedMcpServers` / `deniedMcpServers` | Concat + dedup |
 | `companyAnnouncements` | Concat |
 | `strictKnownMarketplaces` / `blockedMarketplaces` | Concat + dedup |
 | Scalar values (`model`, `defaultMode`, `minimumVersion`, ...) | Highest scope wins (managed > CLI args > local > project > user) |
-| `forceLoginMethod` / `forceLoginOrgUUID` | Managed-only, other scopes ignored |
+| `forceLoginMethod` / `forceLoginOrgUUID` | Managed-only; other scopes are ignored |
 
-**В итоге:** для **restrictive** policies — используй `deny` + `allowManagedPermissionRulesOnly: true` / `allowManagedMcpServersOnly: true` / `allowManagedHooksOnly: true` / `allowManagedReadPathsOnly: true` / `allowManagedDomainsOnly: true`. Тогда lower-scope settings не проникнут.
-
----
-
-## Что НЕ enforceable через managed policy (важные gaps)
-
-- ❌ **`claudeMdExcludes` content** — user может исключить **project-level** `.claude/rules/*.md` через user-scope `claudeMdExcludes` (feature request #34349 open, `claudeMdRequires` не реализован)
-- ❌ **Actual AI outputs** — managed policy контролирует **что Клод может запустить**, но не **что он генерирует в тексте** (это свойство модели + CLAUDE.md guidance)
-- ❌ **User's prompt content** — managed CLAUDE.md инструктирует Клода, но user всё равно может написать любой prompt
-- ❌ **Hardware-level enforcement** — если user снимет диск и смонтирует на unmanaged machine, managed policy больше нет
-- ❌ **Offline audit trail** — Compliance API работает только когда клиент talk к api.anthropic.com; offline usage не логируется централизованно (нужны local hooks + push позже)
-- ❌ **Specific model behavior** (e.g., запретить Клоду "предлагать изменять prod DB") — это через CLAUDE.md / rules, не hard enforcement
-- ❌ **Token usage / cost limit per developer** — нет прямого `maxTokensPerSession` setting. Monitor через Compliance API или OTel metrics.
+**Bottom line:** for **restrictive** policies, use `deny` together with `allowManagedPermissionRulesOnly: true` / `allowManagedMcpServersOnly: true` / `allowManagedHooksOnly: true` / `allowManagedReadPathsOnly: true` / `allowManagedDomainsOnly: true`. That way lower-scope settings will not leak through.
 
 ---
 
-## Per-scope limit (important edge cases)
+## What is NOT enforceable through managed policy (important gaps)
 
-- `autoMemoryDirectory` — **НЕ принимается** в project settings (security — чтобы shared repo не перенаправил memory writes в sensitive location). Работает в managed/local/user.
-- `skipDangerousModePermissionPrompt` — **НЕ принимается** в project settings (чтобы untrusted repo не auto-bypass).
-- `autoMode.allow/soft_deny` — **НЕ принимается** в shared project settings.
+- **`claudeMdExcludes` content**: a user can exclude **project-level** `.claude/rules/*.md` via user-scope `claudeMdExcludes` (feature request #34349 is open, `claudeMdRequires` is not implemented)
+- **Actual AI outputs**: managed policy controls **what Claude is allowed to run**, but not **what it generates as text** (that is a property of the model plus CLAUDE.md guidance)
+- **User's prompt content**: a managed CLAUDE.md instructs Claude, but the user can still write any prompt
+- **Hardware-level enforcement**: if the user removes the disk and mounts it on an unmanaged machine, managed policy is gone
+- **Offline audit trail**: the Compliance API only works while the client is talking to api.anthropic.com; offline usage is not logged centrally (you need local hooks plus a later push)
+- **Specific model behavior** (e.g., forbid Claude from "suggesting changes to the prod DB"): this goes through CLAUDE.md / rules, not hard enforcement
+- **Token usage / cost limit per developer**: there is no direct `maxTokensPerSession` setting. Monitor via the Compliance API or OTel metrics.
 
 ---
 
-## /status + /permissions для debug
+## Per-scope limits (important edge cases)
+
+- `autoMemoryDirectory`: **not accepted** in project settings (a security measure, so a shared repo cannot redirect memory writes to a sensitive location). Works in managed/local/user.
+- `skipDangerousModePermissionPrompt`: **not accepted** in project settings (so an untrusted repo cannot auto-bypass).
+- `autoMode.allow/soft_deny`: **not accepted** in shared project settings.
+
+---
+
+## /status and /permissions for debugging
 
 ```
 /status
 ```
-Показывает:
-- Какие settings sources активны (managed, user, project, local, command-line)
-- Сколько hooks загружено из каждого
-- Trust settings для current project
+Shows:
+- Which settings sources are active (managed, user, project, local, command-line)
+- How many hooks are loaded from each
+- Trust settings for the current project
 
 ```
 /permissions
 ```
-Показывает full permission rules list с указанием source (managed/user/project). Полезно для debug "почему эта команда заблокирована".
+Shows the full list of permission rules with the source (managed/user/project). Useful for debugging "why is this command blocked".
